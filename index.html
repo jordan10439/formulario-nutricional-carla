@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ficha Nutricional | Carla Guerrero Nutricionista</title>
+  <meta name="description" content="Completa tu ficha nutricional para tu consulta con Carla Guerrero, Nutricionista. Un paso hacia tu bienestar y salud." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- TOP GRADIENT LINE -->
+  <div class="top-bar"></div>
+
+  <!-- ================================================================
+       HERO
+       ================================================================ -->
+  <header class="hero-header">
+
+    <!-- Decorative SVG organic background -->
+    <div class="hero-deco" aria-hidden="true">
+      <svg class="deco-blob deco-blob-1" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+        <path d="M250,50 C350,50 440,150 440,260 C440,370 360,440 250,440 C140,440 60,360 60,260 C60,150 150,50 250,50 Z" fill="rgba(168,180,154,0.12)"/>
+      </svg>
+      <svg class="deco-blob deco-blob-2" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="200" cy="200" rx="180" ry="160" fill="rgba(242,199,179,0.15)" transform="rotate(30 200 200)"/>
+      </svg>
+      <!-- Floating leaf right -->
+      <svg class="deco-leaf deco-leaf-r" viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M60 180 Q20 120 30 60 Q60 10 90 60 Q100 120 60 180Z" fill="#A8B49A" opacity="0.2"/>
+        <path d="M60 180 Q60 120 60 60" stroke="#A8B49A" stroke-width="1.5" fill="none" opacity="0.3"/>
+        <path d="M60 140 Q80 120 85 100" stroke="#A8B49A" stroke-width="1" fill="none" opacity="0.25"/>
+        <path d="M60 120 Q40 100 38 80" stroke="#A8B49A" stroke-width="1" fill="none" opacity="0.25"/>
+      </svg>
+      <!-- Floating leaf left -->
+      <svg class="deco-leaf deco-leaf-l" viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M60 180 Q20 120 30 60 Q60 10 90 60 Q100 120 60 180Z" fill="#E6B1A5" opacity="0.18"/>
+        <path d="M60 180 Q60 120 60 60" stroke="#E6B1A5" stroke-width="1.5" fill="none" opacity="0.25"/>
+      </svg>
+      <!-- Dots accent -->
+      <svg class="deco-dots" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="4" fill="#A8B49A" opacity="0.3"/>
+        <circle cx="30" cy="10" r="3" fill="#E6B1A5" opacity="0.25"/>
+        <circle cx="10" cy="30" r="3" fill="#EADCC6" opacity="0.3"/>
+        <circle cx="50" cy="20" r="2.5" fill="#A8B49A" opacity="0.2"/>
+        <circle cx="30" cy="50" r="2" fill="#E6B1A5" opacity="0.2"/>
+        <circle cx="60" cy="40" r="4" fill="#EADCC6" opacity="0.25"/>
+        <circle cx="70" cy="10" r="2.5" fill="#A8B49A" opacity="0.2"/>
+      </svg>
+    </div>
+
+    <div class="hero-inner">
+
+      <!-- LOGO — blended naturally on cream bg -->
+      <div class="logo-zone">
+        <img src="logo.png" alt="Carla Guerrero Nutricionista" class="logo-img" />
+      </div>
+
+      <!-- Divider with leaf motif -->
+      <div class="hero-divider">
+        <span class="divider-line"></span>
+        <svg class="divider-leaf-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+          <path d="M12 22 Q4 14 5 6 Q12 2 19 6 Q20 14 12 22Z" fill="#A8B49A" opacity="0.7"/>
+          <path d="M12 22 Q12 14 12 6" stroke="#A8B49A" stroke-width="0.8" fill="none"/>
+        </svg>
+        <span class="divider-line"></span>
+      </div>
+
+      <!-- Hero text card -->
+      <div class="hero-card">
+        <span class="hero-overline">✦ Consulta Nutricional ✦</span>
+        <h1 class="hero-title">Ficha Nutricional<br/><em>del Paciente</em></h1>
+        <p class="hero-desc">
+          Completa este formulario con calma y detalle. Esta información me permitirá conocerte mejor y ofrecerte una asesoría personalizada, de alta calidad y centrada en tu bienestar.
+        </p>
+
+        <!-- Stats row -->
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-icon">🔒</div>
+            <div class="stat-text">
+              <strong>100% Confidencial</strong>
+              <span>Tu privacidad es prioridad</span>
+            </div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-icon">⏱</div>
+            <div class="stat-text">
+              <strong>10-15 min</strong>
+              <span>Tiempo estimado</span>
+            </div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-icon">🌿</div>
+            <div class="stat-text">
+              <strong>4 Secciones</strong>
+              <span>Fáciles y claras</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================================================================
+       MAIN WRAPPER
+       ================================================================ -->
+  <div class="main-container">
+
+    <!-- STEPPER -->
+    <div class="stepper-card">
+      <div class="stepper-steps">
+
+        <div class="step active" data-step="1">
+          <div class="step-bubble" id="circle-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <span class="step-label">Datos<br/>Personales</span>
+        </div>
+
+        <div class="step-rail"><div class="step-rail-fill" id="line-1"></div></div>
+
+        <div class="step" data-step="2">
+          <div class="step-bubble" id="circle-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <span class="step-label">Historia<br/>Clínica</span>
+        </div>
+
+        <div class="step-rail"><div class="step-rail-fill" id="line-2"></div></div>
+
+        <div class="step" data-step="3">
+          <div class="step-bubble" id="circle-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3v7"/></svg>
+          </div>
+          <span class="step-label">Alimentación<br/>& Hábitos</span>
+        </div>
+
+        <div class="step-rail"><div class="step-rail-fill" id="line-3"></div></div>
+
+        <div class="step" data-step="4">
+          <div class="step-bubble" id="circle-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <span class="step-label">Actividad<br/>& Cierre</span>
+        </div>
+
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- ================================================================
+         FORM
+         ================================================================ -->
+    <form id="nutritionForm" novalidate>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           STEP 1 · DATOS PERSONALES
+           ══════════════════════════════════════════════════════════════ -->
+      <section class="form-card active" id="step-1">
+
+        <div class="card-header" style="--accent: #A8B49A; --accent-light: #E4EDE0;">
+          <div class="card-header-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="card-header-text">
+            <span class="card-step-num">01</span>
+            <h2 class="card-title">Antecedentes Personales</h2>
+            <p class="card-subtitle">Cuéntame un poco sobre ti para personalizar tu atención</p>
+          </div>
+          <div class="card-step-badge">Paso 1 / 4</div>
+        </div>
+
+        <!-- Decorative wave separator -->
+        <div class="wave-sep" style="--wave-color: #A8B49A"></div>
+
+        <div class="card-body">
+          <div class="form-grid">
+
+            <div class="field-group">
+              <label for="nombre" class="field-label">
+                <span class="label-icon">👤</span> Nombre
+                <span class="req">*</span>
+              </label>
+              <input type="text" id="nombre" name="nombre" class="field-input" placeholder="Tu nombre" required autocomplete="given-name"/>
+              <span class="field-error" id="error-nombre"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="apellido" class="field-label">
+                <span class="label-icon">👤</span> Apellido
+                <span class="req">*</span>
+              </label>
+              <input type="text" id="apellido" name="apellido" class="field-input" placeholder="Tu apellido" required autocomplete="family-name"/>
+              <span class="field-error" id="error-apellido"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="edad" class="field-label">
+                <span class="label-icon">🎂</span> Edad <span class="req">*</span>
+              </label>
+              <input type="number" id="edad" name="edad" class="field-input" placeholder="Ej: 32" min="1" max="120" required />
+              <span class="field-error" id="error-edad"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="fechaNacimiento" class="field-label">
+                <span class="label-icon">📅</span> Fecha de nacimiento <span class="req">*</span>
+              </label>
+              <input type="date" id="fechaNacimiento" name="fechaNacimiento" class="field-input" required />
+              <span class="field-error" id="error-fechaNacimiento"></span>
+            </div>
+
+            <!-- TELÉFONO CHILE +56 9 -->
+            <div class="field-group">
+              <label for="telefono" class="field-label">
+                <span class="label-icon">📱</span> WhatsApp / Teléfono <span class="req">*</span>
+              </label>
+              <div class="phone-wrap">
+                <div class="phone-prefix">
+                  <span class="flag">🇨🇱</span>
+                  <span class="prefix-text">+56 9</span>
+                </div>
+                <input type="tel" id="telefono" name="telefono" class="field-input phone-input"
+                       placeholder="12345678" maxlength="8"
+                       inputmode="numeric" pattern="[0-9]{8}" required />
+              </div>
+              <span class="field-hint">Solo los 8 dígitos restantes de tu número</span>
+              <span class="field-error" id="error-telefono"></span>
+            </div>
+
+            <div class="field-group full">
+              <label for="email" class="field-label">
+                <span class="label-icon">✉️</span> Correo electrónico <span class="req">*</span>
+              </label>
+              <input type="email" id="email" name="email" class="field-input" placeholder="tuemail@correo.com" required autocomplete="email"/>
+              <span class="field-error" id="error-email"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="comuna" class="field-label">
+                <span class="label-icon">📍</span> Ciudad / Comuna
+              </label>
+              <input type="text" id="comuna" name="comuna" class="field-input" placeholder="Ej: Santiago, Las Condes..." />
+            </div>
+
+            <div class="field-group">
+              <label for="estadoCivil" class="field-label">
+                <span class="label-icon">💍</span> Estado civil
+              </label>
+              <div class="select-wrap">
+                <select id="estadoCivil" name="estadoCivil" class="field-select">
+                  <option value="">Selecciona una opción</option>
+                  <option value="soltero">Soltero/a</option>
+                  <option value="casado">Casado/a</option>
+                  <option value="pareja">En pareja</option>
+                  <option value="divorciado">Divorciado/a</option>
+                  <option value="viudo">Viudo/a</option>
+                </select>
+                <span class="select-caret">▾</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="nacionalidad" class="field-label">
+                <span class="label-icon">🌍</span> Nacionalidad
+              </label>
+              <input type="text" id="nacionalidad" name="nacionalidad" class="field-input" placeholder="Ej: Chilena, Colombiana..." />
+            </div>
+
+          </div>
+
+          <!-- SUB-SECTION: Anamnesis social -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-icon-wrap" style="background: linear-gradient(135deg,#E4EDE0,#F5EEE0);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B8560" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              </div>
+              <div>
+                <h3 class="sub-section-title">Vida Cotidiana</h3>
+                <p class="sub-section-desc">Contexto sobre tu rutina y entorno diario</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field-group full">
+                <label for="ocupacion" class="field-label"><span class="label-icon">💼</span> ¿A qué te dedicas?</label>
+                <input type="text" id="ocupacion" name="ocupacion" class="field-input" placeholder="Ej: Docente, Ingeniera, Estudiante..." />
+              </div>
+              <div class="field-group">
+                <label for="jornada" class="field-label"><span class="label-icon">🕐</span> Jornada de trabajo / estudio</label>
+                <div class="select-wrap">
+                  <select id="jornada" name="jornada" class="field-select">
+                    <option value="">Selecciona...</option>
+                    <option value="manana">Solo mañana</option>
+                    <option value="tarde">Solo tarde</option>
+                    <option value="noche">Turno de noche</option>
+                    <option value="completa">Jornada completa</option>
+                    <option value="turnos">Turnos rotativos</option>
+                    <option value="remoto">Horario flexible / remoto</option>
+                  </select>
+                  <span class="select-caret">▾</span>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="transporte" class="field-label"><span class="label-icon">🚌</span> Medio de transporte</label>
+                <input type="text" id="transporte" name="transporte" class="field-input" placeholder="Ej: Auto, Metro, A pie..." />
+              </div>
+              <div class="field-group full">
+                <label for="convivencia" class="field-label"><span class="label-icon">👨‍👩‍👧</span> ¿Con quién vives?</label>
+                <input type="text" id="convivencia" name="convivencia" class="field-input" placeholder="Ej: Solo/a, con mi pareja, con familia..." />
+              </div>
+            </div>
+          </div>
+        </div><!-- /card-body -->
+
+        <div class="card-footer">
+          <button type="button" class="btn-next" onclick="goToStep(2)">
+            Continuar
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           STEP 2 · HISTORIA CLÍNICA
+           ══════════════════════════════════════════════════════════════ -->
+      <section class="form-card" id="step-2">
+
+        <div class="card-header" style="--accent: #D4856A; --accent-light: #FAF0EB;">
+          <div class="card-header-icon" style="background: linear-gradient(135deg,#FAF0EB,#F5E0D5);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#D4856A" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div class="card-header-text">
+            <span class="card-step-num" style="color:#D4856A;">02</span>
+            <h2 class="card-title">Historia Clínica</h2>
+            <p class="card-subtitle">Tu salud, objetivos y antecedentes médicos</p>
+          </div>
+          <div class="card-step-badge" style="background:#FAF0EB; color:#D4856A;">Paso 2 / 4</div>
+        </div>
+
+        <div class="wave-sep" style="--wave-color: #D4856A"></div>
+
+        <div class="card-body">
+          <div class="form-grid">
+
+            <div class="field-group full">
+              <label for="motivacion" class="field-label">
+                <span class="label-icon">💭</span>
+                ¿Qué te motivó a solicitar una asesoría nutricional? <span class="req">*</span>
+              </label>
+              <textarea id="motivacion" name="motivacion" class="field-textarea" placeholder="Cuéntame tu motivación principal..." rows="3" required></textarea>
+              <span class="field-error" id="error-motivacion"></span>
+            </div>
+
+            <div class="field-group full">
+              <label class="field-label">
+                <span class="label-icon">🎯</span>
+                ¿Cuál es tu objetivo principal? <span class="req">*</span>
+              </label>
+              <div class="chip-grid" id="objetivoChips">
+                <button type="button" class="chip" data-value="masa_muscular">💪 Aumentar masa muscular</button>
+                <button type="button" class="chip" data-value="bajar_grasa">🔥 Reducir grasa corporal</button>
+                <button type="button" class="chip" data-value="mejorar_habitos">🌱 Mejorar hábitos</button>
+                <button type="button" class="chip" data-value="ordenar_horarios">⏰ Ordenar horarios</button>
+                <button type="button" class="chip" data-value="energia">⚡ Aumentar energía</button>
+                <button type="button" class="chip" data-value="rendimiento">🏃 Rendimiento deportivo</button>
+                <button type="button" class="chip" data-value="bienestar">✨ Bienestar general</button>
+                <button type="button" class="chip" data-value="otro">📝 Otro</button>
+              </div>
+              <input type="hidden" id="objetivo" name="objetivo" />
+              <input type="text" id="objetivoOtro" name="objetivoOtro" class="field-input" placeholder="Describe tu objetivo..." style="margin-top:12px;display:none" />
+              <span class="field-error" id="error-objetivo"></span>
+            </div>
+
+            <div class="field-group full">
+              <label class="field-label"><span class="label-icon">🔪</span> ¿Has tenido alguna cirugía?</label>
+              <div class="radio-row">
+                <label class="radio-card"><input type="radio" name="tieneCirugia" value="no" /><span class="radio-label">No, ninguna</span></label>
+                <label class="radio-card"><input type="radio" name="tieneCirugia" value="si" /><span class="radio-label">Sí, he tenido cirugías</span></label>
+              </div>
+              <textarea id="cirugia" name="cirugia" class="field-textarea" placeholder="Indica qué tipo de cirugía y cuándo..." rows="2" style="margin-top:14px;display:none"></textarea>
+            </div>
+
+            <div class="field-group full">
+              <label for="dietaPrevia" class="field-label"><span class="label-icon">📋</span> ¿Has seguido alguna dieta anteriormente? ¿Cómo te fue?</label>
+              <textarea id="dietaPrevia" name="dietaPrevia" class="field-textarea" placeholder="Cuéntame tu experiencia con dietas previas..." rows="3"></textarea>
+            </div>
+
+          </div>
+
+          <!-- ANTECEDENTES DE SALUD — simplificado -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-icon-wrap" style="background:linear-gradient(135deg,#FAF0EB,#F5E0D5);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4856A" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </div>
+              <div>
+                <h3 class="sub-section-title">Antecedentes de Salud</h3>
+                <p class="sub-section-desc">Esta información me permite diseñar un plan nutricional seguro y adaptado a ti</p>
+              </div>
+            </div>
+
+            <div class="info-cards-col">
+              <div class="info-card">
+                <div class="info-card-label"><span>🏥</span> ¿Presentas alguna enfermedad diagnosticada?</div>
+                <div class="radio-row">
+                  <label class="radio-card"><input type="radio" name="tieneEnfermedad" id="enf_no" value="no" checked/><span class="radio-label">No</span></label>
+                  <label class="radio-card"><input type="radio" name="tieneEnfermedad" id="enf_si" value="si"/><span class="radio-label">Sí</span></label>
+                </div>
+                <div id="detalleEnfermedad" class="reveal-block" style="display:none">
+                  <label for="cualEnfermedad" class="field-label">¿Cuál o cuáles?</label>
+                  <textarea id="cualEnfermedad" name="cualEnfermedad" class="field-textarea" placeholder="Ej: Hipotiroidismo, Diabetes tipo 2, Resistencia a la insulina..." rows="2"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MEDICAMENTOS -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-icon-wrap" style="background:linear-gradient(135deg,#FAF0EB,#F5E0D5);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4856A" stroke-width="1.5"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+              </div>
+              <div>
+                <h3 class="sub-section-title">Medicamentos & Suplementos</h3>
+                <p class="sub-section-desc">Incluye todo lo que consumes regularmente</p>
+              </div>
+            </div>
+
+            <div class="info-cards-col">
+
+              <div class="info-card">
+                <div class="info-card-label"><span>💊</span> ¿Consumes algún medicamento?</div>
+                <div class="radio-row">
+                  <label class="radio-card"><input type="radio" name="tieneMed" value="no" checked/><span class="radio-label">No</span></label>
+                  <label class="radio-card"><input type="radio" name="tieneMed" value="si"/><span class="radio-label">Sí</span></label>
+                </div>
+                <div id="detalleMed" class="reveal-block" style="display:none">
+                  <div class="form-grid">
+                    <div class="field-group full"><label for="medNombre" class="field-label">¿Cuál/es?</label><input type="text" id="medNombre" name="medNombre" class="field-input" placeholder="Nombre del medicamento"/></div>
+                    <div class="field-group"><label for="medFrecuencia" class="field-label">Frecuencia</label><input type="text" id="medFrecuencia" name="medFrecuencia" class="field-input" placeholder="Ej: 1 vez al día"/></div>
+                    <div class="field-group"><label for="medDosis" class="field-label">Dosis</label><input type="text" id="medDosis" name="medDosis" class="field-input" placeholder="Ej: 500mg"/></div>
+                    <div class="field-group full"><label for="medMotivo" class="field-label">Motivo</label><input type="text" id="medMotivo" name="medMotivo" class="field-input" placeholder="Razón de la prescripción"/></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <div class="info-card-label"><span>🌿</span> ¿Consumes suplementos? (vitaminas, probióticos, etc.)</div>
+                <div class="radio-row">
+                  <label class="radio-card"><input type="radio" name="tieneSup" value="no" checked/><span class="radio-label">No</span></label>
+                  <label class="radio-card"><input type="radio" name="tieneSup" value="si"/><span class="radio-label">Sí</span></label>
+                </div>
+                <div id="detalleSup" class="reveal-block" style="display:none">
+                  <div class="form-grid">
+                    <div class="field-group full"><label for="supNombre" class="field-label">¿Cuál/es?</label><input type="text" id="supNombre" name="supNombre" class="field-input" placeholder="Ej: Vitamina D, Omega 3, Magnesio..."/></div>
+                    <div class="field-group"><label for="supFrecuencia" class="field-label">Frecuencia</label><input type="text" id="supFrecuencia" name="supFrecuencia" class="field-input" placeholder="Ej: Diario"/></div>
+                    <div class="field-group"><label for="supMarca" class="field-label">Marca</label><input type="text" id="supMarca" name="supMarca" class="field-input" placeholder="Nombre de la marca"/></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <div class="info-card-label"><span>💪</span> ¿Consumes suplementos deportivos? (creatina, proteína, etc.)</div>
+                <div class="radio-row">
+                  <label class="radio-card"><input type="radio" name="tieneSupDep" value="no" checked/><span class="radio-label">No</span></label>
+                  <label class="radio-card"><input type="radio" name="tieneSupDep" value="si"/><span class="radio-label">Sí</span></label>
+                </div>
+                <div id="detalleSupDep" class="reveal-block" style="display:none">
+                  <div class="form-grid">
+                    <div class="field-group full"><label for="supDepNombre" class="field-label">¿Cuál/es?</label><input type="text" id="supDepNombre" name="supDepNombre" class="field-input" placeholder="Ej: Proteína whey, creatina..."/></div>
+                    <div class="field-group"><label for="supDepFrecuencia" class="field-label">Frecuencia</label><input type="text" id="supDepFrecuencia" name="supDepFrecuencia" class="field-input" placeholder="Ej: Post entrenamiento"/></div>
+                    <div class="field-group"><label for="supDepMarca" class="field-label">Marca</label><input type="text" id="supDepMarca" name="supDepMarca" class="field-input" placeholder="Nombre de la marca"/></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hábitos -->
+              <div class="info-card">
+                <div class="info-card-label"><span>🌟</span> Hábitos</div>
+                <div style="overflow-x:auto">
+                  <div class="condition-table" style="min-width:420px">
+                    <div class="ct-head" style="grid-template-columns:2fr 1fr 1fr 1.4fr 1.4fr">
+                      <div class="ct-col-name">Hábito</div>
+                      <div class="ct-col">Sí</div>
+                      <div class="ct-col">No</div>
+                      <div class="ct-col">Frecuencia</div>
+                      <div class="ct-col">Cantidad</div>
+                    </div>
+                    <div class="ct-row" style="grid-template-columns:2fr 1fr 1fr 1.4fr 1.4fr">
+                      <div class="ct-name">🍷 Alcohol</div>
+                      <div class="ct-cell"><input type="radio" name="alcohol" id="al_si" value="si" class="d-radio"/><label for="al_si" class="rdot"></label></div>
+                      <div class="ct-cell"><input type="radio" name="alcohol" id="al_no" value="no" class="d-radio"/><label for="al_no" class="rdot"></label></div>
+                      <div class="ct-cell"><input type="text" name="alcohol_frec" class="field-input mini" placeholder="Ej: 2/sem"/></div>
+                      <div class="ct-cell"><input type="text" name="alcohol_cant" class="field-input mini" placeholder="Ej: 2 copas"/></div>
+                    </div>
+                    <div class="ct-row" style="grid-template-columns:2fr 1fr 1fr 1.4fr 1.4fr">
+                      <div class="ct-name">🚬 Tabaco</div>
+                      <div class="ct-cell"><input type="radio" name="tabaco" id="tb_si" value="si" class="d-radio"/><label for="tb_si" class="rdot"></label></div>
+                      <div class="ct-cell"><input type="radio" name="tabaco" id="tb_no" value="no" class="d-radio"/><label for="tb_no" class="rdot"></label></div>
+                      <div class="ct-cell"><input type="text" name="tabaco_frec" class="field-input mini" placeholder="Ej: Diario"/></div>
+                      <div class="ct-cell"><input type="text" name="tabaco_cant" class="field-input mini" placeholder="Ej: 5 cig."/></div>
+                    </div>
+                    <div class="ct-row" style="grid-template-columns:2fr 1fr 1fr 1.4fr 1.4fr">
+                      <div class="ct-name">💊 Drogas</div>
+                      <div class="ct-cell"><input type="radio" name="drogas" id="dr_si" value="si" class="d-radio"/><label for="dr_si" class="rdot"></label></div>
+                      <div class="ct-cell"><input type="radio" name="drogas" id="dr_no" value="no" class="d-radio"/><label for="dr_no" class="rdot"></label></div>
+                      <div class="ct-cell"><input type="text" name="drogas_frec" class="field-input mini" placeholder="Frecuencia"/></div>
+                      <div class="ct-cell"><input type="text" name="drogas_cant" class="field-input mini" placeholder="Cantidad"/></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /card-body -->
+
+        <div class="card-footer">
+          <button type="button" class="btn-back" onclick="goToStep(1)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+            Volver
+          </button>
+          <button type="button" class="btn-next" onclick="goToStep(3)">
+            Continuar
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           STEP 3 · ALIMENTACIÓN & HÁBITOS
+           ══════════════════════════════════════════════════════════════ -->
+      <section class="form-card" id="step-3">
+
+        <div class="card-header" style="--accent: #A8B49A; --accent-light: #E4EDE0;">
+          <div class="card-header-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6B8560" stroke-width="1.5"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3v7"/></svg>
+          </div>
+          <div class="card-header-text">
+            <span class="card-step-num">03</span>
+            <h2 class="card-title">Alimentación & Hábitos</h2>
+            <p class="card-subtitle">Tus preferencias, rutinas y salud digestiva</p>
+          </div>
+          <div class="card-step-badge">Paso 3 / 4</div>
+        </div>
+
+        <div class="wave-sep" style="--wave-color: #A8B49A"></div>
+
+        <div class="card-body">
+          <div class="form-grid">
+
+            <div class="field-group full">
+              <label for="alergias" class="field-label"><span class="label-icon">⚠️</span> ¿Tienes alergias o intolerancias alimentarias?</label>
+              <input type="text" id="alergias" name="alergias" class="field-input" placeholder="Ej: Intolerancia a la lactosa, alergia al gluten, al maní..." />
+            </div>
+
+            <div class="field-group full">
+              <label for="rechazo" class="field-label"><span class="label-icon">🚫</span> ¿Hay alimentos que no te gusten o rechaces?</label>
+              <input type="text" id="rechazo" name="rechazo" class="field-input" placeholder="Ej: No me gustan las vísceras, el cilantro..." />
+            </div>
+
+            <div class="field-group full">
+              <label class="field-label"><span class="label-icon">🌿</span> ¿Sigues algún tipo de alimentación especial?</label>
+              <div class="chip-grid" id="tipoChips">
+                <button type="button" class="chip" data-value="omnivoro">🍗 Omnívoro</button>
+                <button type="button" class="chip" data-value="vegetariano">🥦 Vegetariano</button>
+                <button type="button" class="chip" data-value="vegano">🌱 Vegano</button>
+                <button type="button" class="chip" data-value="ovovegetariano">🥚 Ovo-vegetariano</button>
+                <button type="button" class="chip" data-value="lactovegetariano">🥛 Lacto-vegetariano</button>
+                <button type="button" class="chip" data-value="sin_gluten">🌾 Sin gluten</button>
+                <button type="button" class="chip" data-value="keto">🥑 Keto / Low carb</button>
+                <button type="button" class="chip" data-value="otro_alim">📝 Otro</button>
+              </div>
+              <input type="hidden" id="tipoAlimentacion" name="tipoAlimentacion" />
+            </div>
+
+            <div class="field-group full">
+              <label for="distension" class="field-label"><span class="label-icon">🫧</span> ¿Qué alimentos te causan hinchazón o malestar?</label>
+              <input type="text" id="distension" name="distension" class="field-input" placeholder="Ej: Legumbres, lácteos, brócoli..." />
+            </div>
+
+            <div class="field-group">
+              <label for="apetito" class="field-label"><span class="label-icon">😋</span> ¿Cómo describes tu apetito?</label>
+              <div class="select-wrap">
+                <select id="apetito" name="apetito" class="field-select">
+                  <option value="">Selecciona...</option>
+                  <option value="muy_bueno">Muy bueno</option>
+                  <option value="bueno">Bueno</option>
+                  <option value="moderado">Moderado</option>
+                  <option value="bajo">Bajo</option>
+                  <option value="muy_bajo">Muy bajo</option>
+                  <option value="variable">Variable</option>
+                </select>
+                <span class="select-caret">▾</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="horarioApetito" class="field-label"><span class="label-icon">🕐</span> ¿Cuándo sientes más hambre?</label>
+              <div class="select-wrap">
+                <select id="horarioApetito" name="horarioApetito" class="field-select">
+                  <option value="">Selecciona...</option>
+                  <option value="manana">En la mañana</option>
+                  <option value="mediodia">Al mediodía</option>
+                  <option value="tarde">En la tarde</option>
+                  <option value="noche">En la noche</option>
+                  <option value="madrugada">En la madrugada</option>
+                  <option value="todo_dia">Durante todo el día</option>
+                </select>
+                <span class="select-caret">▾</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="tiemposComida" class="field-label"><span class="label-icon">🍽️</span> ¿Cuántas veces comes al día?</label>
+              <div class="select-wrap">
+                <select id="tiemposComida" name="tiemposComida" class="field-select">
+                  <option value="">Selecciona...</option>
+                  <option value="1">1 vez</option>
+                  <option value="2">2 veces</option>
+                  <option value="3">3 veces</option>
+                  <option value="4">4 veces</option>
+                  <option value="5">5 o más veces</option>
+                </select>
+                <span class="select-caret">▾</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="dondecome" class="field-label"><span class="label-icon">🏠</span> ¿Dónde comes habitualmente?</label>
+              <div class="select-wrap">
+                <select id="dondecome" name="dondecome" class="field-select">
+                  <option value="">Selecciona...</option>
+                  <option value="casa">En casa</option>
+                  <option value="trabajo">En el trabajo</option>
+                  <option value="restaurante">Restaurante / afuera</option>
+                  <option value="mixto">Mixto</option>
+                </select>
+                <span class="select-caret">▾</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="quienCompra" class="field-label"><span class="label-icon">🛒</span> ¿Quién compra los alimentos?</label>
+              <input type="text" id="quienCompra" name="quienCompra" class="field-input" placeholder="Ej: Yo mismo/a, mi pareja..." />
+            </div>
+
+            <div class="field-group">
+              <label for="quienCocina" class="field-label"><span class="label-icon">🍳</span> ¿Quién cocina habitualmente?</label>
+              <input type="text" id="quienCocina" name="quienCocina" class="field-input" placeholder="Ej: Yo, compartido..." />
+            </div>
+
+          </div>
+
+          <!-- DIGESTIÓN — SIN ESCALA BRISTOL -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-icon-wrap" style="background:linear-gradient(135deg,#E4EDE0,#F5EEE0);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B8560" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              </div>
+              <div>
+                <h3 class="sub-section-title">Salud Digestiva</h3>
+                <p class="sub-section-desc">Información breve sobre tu tránsito intestinal</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field-group">
+                <label for="frecuenciaEvacuacion" class="field-label"><span class="label-icon">📆</span> ¿Con qué frecuencia defecas?</label>
+                <div class="select-wrap">
+                  <select id="frecuenciaEvacuacion" name="frecuenciaEvacuacion" class="field-select">
+                    <option value="">Selecciona...</option>
+                    <option value="varias_al_dia">Varias veces al día</option>
+                    <option value="una_al_dia">Una vez al día</option>
+                    <option value="dia_por_medio">Día por medio</option>
+                    <option value="2_3_semana">2-3 veces a la semana</option>
+                    <option value="1_semana">1 vez a la semana o menos</option>
+                    <option value="variable">Varía mucho</option>
+                  </select>
+                  <span class="select-caret">▾</span>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="laxante" class="field-label"><span class="label-icon">💊</span> ¿Consumes algún laxante?</label>
+                <div class="select-wrap">
+                  <select id="laxante" name="laxante" class="field-select">
+                    <option value="">Selecciona...</option>
+                    <option value="no">No, nunca</option>
+                    <option value="raramente">Raramente</option>
+                    <option value="ocasional">Ocasionalmente</option>
+                    <option value="frecuente">Frecuentemente</option>
+                    <option value="siempre">Siempre / habitualmente</option>
+                  </select>
+                  <span class="select-caret">▾</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HIDRATACIÓN -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-icon-wrap" style="background:linear-gradient(135deg,#EBF4FF,#DFF0FF);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A90C4" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+              </div>
+              <div>
+                <h3 class="sub-section-title">Hidratación</h3>
+                <p class="sub-section-desc">¿De qué color es tu orina con mayor frecuencia?</p>
+              </div>
+            </div>
+
+            <div class="urine-scale">
+              <button type="button" class="urine-btn" data-val="muy_clara" style="background:#FFFFF0;color:#888">
+                <span class="urine-label">Muy clara</span>
+                <span class="urine-sub">Hiper-hidratada</span>
+              </button>
+              <button type="button" class="urine-btn" data-val="palido" style="background:#FFFDE0;color:#666">
+                <span class="urine-label">Amarillo pálido ✓</span>
+                <span class="urine-sub">Bien hidratada</span>
+              </button>
+              <button type="button" class="urine-btn" data-val="amarillo" style="background:#FFF176;color:#555">
+                <span class="urine-label">Amarillo</span>
+                <span class="urine-sub">Normal</span>
+              </button>
+              <button type="button" class="urine-btn" data-val="oscuro" style="background:#F9A825;color:#fff">
+                <span class="urine-label">Amarillo oscuro</span>
+                <span class="urine-sub">Beber más agua</span>
+              </button>
+              <button type="button" class="urine-btn" data-val="naranja" style="background:#BF360C;color:#fff">
+                <span class="urine-label">Naranja / Café</span>
+                <span class="urine-sub">Muy deshidratada</span>
+              </button>
+            </div>
+            <input type="hidden" id="colorOrina" name="colorOrina" />
+          </div>
+
+        </div><!-- /card-body -->
+
+        <div class="card-footer">
+          <button type="button" class="btn-back" onclick="goToStep(2)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+            Volver
+          </button>
+          <button type="button" class="btn-next" onclick="goToStep(4)">
+            Continuar
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           STEP 4 · ACTIVIDAD FÍSICA & CIERRE
+           ══════════════════════════════════════════════════════════════ -->
+      <section class="form-card" id="step-4">
+
+        <div class="card-header" style="--accent: #C4956A; --accent-light: #FDF4EB;">
+          <div class="card-header-icon" style="background:linear-gradient(135deg,#FDF4EB,#F9E4CE);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C4956A" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <div class="card-header-text">
+            <span class="card-step-num" style="color:#C4956A;">04</span>
+            <h2 class="card-title">Actividad Física & Cierre</h2>
+            <p class="card-subtitle">Movimiento, medidas y tus preguntas para la consulta</p>
+          </div>
+          <div class="card-step-badge" style="background:#FDF4EB;color:#C4956A;">Paso 4 / 4</div>
+        </div>
+
+        <div class="wave-sep" style="--wave-color: #C4956A"></div>
+
+        <div class="card-body">
+          <div class="form-grid">
+
+            <div class="field-group full">
+              <label for="deporte" class="field-label"><span class="label-icon">🏋️</span> ¿Realizas algún deporte o actividad física?</label>
+              <input type="text" id="deporte" name="deporte" class="field-input" placeholder="Ej: Gym, natación, yoga, ciclismo, pilates..." />
+            </div>
+
+            <div class="field-group">
+              <label for="frecuenciaEjercicio" class="field-label"><span class="label-icon">📅</span> ¿Con qué frecuencia?</label>
+              <div class="select-wrap">
+                <select id="frecuenciaEjercicio" name="frecuenciaEjercicio" class="field-select">
+                  <option value="">Selecciona...</option>
+                  <option value="no">No hago ejercicio</option>
+                  <option value="1vez">1 vez a la semana</option>
+                  <option value="2_3">2-3 veces a la semana</option>
+                  <option value="4_5">4-5 veces a la semana</option>
+                  <option value="todos">Todos los días</option>
+                  <option value="2xdia">Dos veces al día</option>
+                </select>
+                <span class="select-caret">▾</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="duracionEjercicio" class="field-label"><span class="label-icon">⏱</span> Duración promedio</label>
+              <div class="select-wrap">
+                <select id="duracionEjercicio" name="duracionEjercicio" class="field-select">
+                  <option value="">Selecciona...</option>
+                  <option value="menos30">Menos de 30 min</option>
+                  <option value="30_60">30 - 60 min</option>
+                  <option value="60_90">60 - 90 min</option>
+                  <option value="mas90">Más de 90 min</option>
+                </select>
+                <span class="select-caret">▾</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="caminata" class="field-label"><span class="label-icon">🚶</span> ¿Cuánto caminas al día?</label>
+              <div class="select-wrap">
+                <select id="caminata" name="caminata" class="field-select">
+                  <option value="">Selecciona...</option>
+                  <option value="muy_poco">Muy poco (menos de 15 min)</option>
+                  <option value="poco">Poco (15-30 min)</option>
+                  <option value="moderado">Moderado (30-60 min)</option>
+                  <option value="bastante">Bastante (más de 60 min)</option>
+                </select>
+                <span class="select-caret">▾</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="tiempoEjercicio" class="field-label"><span class="label-icon">📆</span> ¿Hace cuánto haces ejercicio?</label>
+              <input type="text" id="tiempoEjercicio" name="tiempoEjercicio" class="field-input" placeholder="Ej: 6 meses, 2 años..." />
+            </div>
+
+            <div class="field-group">
+              <label for="implementos" class="field-label"><span class="label-icon">🏠</span> ¿Tienes implementos en casa?</label>
+              <input type="text" id="implementos" name="implementos" class="field-input" placeholder="Ej: Mancuernas, bicicleta, bandas..." />
+            </div>
+
+            <div class="field-group full">
+              <label class="field-label"><span class="label-icon">🎯</span> ¿Planeas comenzar a hacer ejercicio?</label>
+              <div class="radio-row">
+                <label class="radio-card"><input type="radio" name="planEjercicio" value="ya_hago"/><span class="radio-label">Ya hago ejercicio</span></label>
+                <label class="radio-card"><input type="radio" name="planEjercicio" value="si_planeo"/><span class="radio-label">Sí, planeo comenzar</span></label>
+                <label class="radio-card"><input type="radio" name="planEjercicio" value="no_por_ahora"/><span class="radio-label">No por ahora</span></label>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- MEDIDAS -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-icon-wrap" style="background:linear-gradient(135deg,#FDF4EB,#F9E4CE);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4956A" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              </div>
+              <div>
+                <h3 class="sub-section-title">Medidas Antropométricas</h3>
+                <p class="sub-section-desc">Solo si conoces estos datos con certeza — son opcionales</p>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field-group">
+                <label for="pesoActual" class="field-label"><span class="label-icon">⚖️</span> Peso actual</label>
+                <div class="input-unit-wrap">
+                  <input type="number" id="pesoActual" name="pesoActual" class="field-input" placeholder="Ej: 68" min="20" max="300" step="0.1"/>
+                  <span class="input-unit">kg</span>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="pesoHabitual" class="field-label"><span class="label-icon">⚖️</span> Peso habitual</label>
+                <div class="input-unit-wrap">
+                  <input type="number" id="pesoHabitual" name="pesoHabitual" class="field-input" placeholder="Ej: 65" min="20" max="300" step="0.1"/>
+                  <span class="input-unit">kg</span>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="estatura" class="field-label"><span class="label-icon">📏</span> Estatura</label>
+                <div class="input-unit-wrap">
+                  <input type="number" id="estatura" name="estatura" class="field-input" placeholder="Ej: 165" min="100" max="250"/>
+                  <span class="input-unit">cm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PREGUNTAS FINALES -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-icon-wrap" style="background:linear-gradient(135deg,#FDF4EB,#F9E4CE);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4956A" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div>
+                <h3 class="sub-section-title">Tus Preguntas para la Consulta</h3>
+                <p class="sub-section-desc">¿Hay algo que quieras consultar durante tu sesión?</p>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field-group full">
+                <label for="preguntas" class="field-label"><span class="label-icon">💬</span> Escribe tus preguntas o temas a tratar</label>
+                <textarea id="preguntas" name="preguntas" class="field-textarea" rows="4" placeholder="Escribe libremente cualquier duda, pregunta o tema que quieras abordar con Carla durante tu consulta..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- FINAL ENCOURAGEMENT BANNER -->
+          <div class="final-banner">
+            <div class="final-banner-icon">🌿</div>
+            <div class="final-banner-text">
+              <strong>¡Ya casi terminas!</strong>
+              <span>Revisa que todo esté correcto y envía tu ficha. Me pondré en contacto contigo pronto.</span>
+            </div>
+          </div>
+
+        </div><!-- /card-body -->
+
+        <div class="card-footer">
+          <button type="button" class="btn-back" onclick="goToStep(3)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+            Volver
+          </button>
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+            Enviar mi Ficha Nutricional
+          </button>
+        </div>
+
+      </section>
+
+    </form>
+  </div><!-- /main-container -->
+
+  <!-- ================================================================
+       SUCCESS OVERLAY
+       ================================================================ -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+      <div class="success-check">
+        <svg class="check-svg" viewBox="0 0 52 52">
+          <circle class="check-circle" cx="26" cy="26" r="25" fill="none" stroke-width="2"/>
+          <path class="check-path" fill="none" stroke-linecap="round" stroke-linejoin="round" d="M14 27l7 7 17-17"/>
+        </svg>
+      </div>
+      <img src="logo.png" alt="Carla Guerrero Nutricionista" class="success-logo"/>
+      <h2 class="success-title">¡Ficha enviada con éxito!</h2>
+      <p class="success-sub">Carla Guerrero · Nutricionista</p>
+      <p class="success-msg">Gracias por completar tu ficha nutricional. Me pondré en contacto contigo a la brevedad para coordinar tu primera consulta y comenzar juntos este camino hacia tu bienestar.</p>
+      <div class="success-quote">
+        <p>"Nutrición que transforma. Elecciones que nutren. Resultados que duran."</p>
+      </div>
+      <button class="btn-restart" onclick="resetForm()">Completar otra ficha</button>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       FOOTER
+       ================================================================ -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <img src="logo.png" alt="Logo Carla Guerrero" class="footer-logo"/>
+      <div class="footer-text">
+        <p class="footer-name">Carla Guerrero</p>
+        <p class="footer-role">Nutricionista</p>
+        <div class="footer-line"></div>
+        <p class="footer-tagline">Nutrición que transforma · Elecciones que nutren · Resultados que duran</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
