@@ -756,20 +756,23 @@ function clinicHTML(d) {
 
   /* ── medicamentos ── */
   const medHTML = d.tieneMed === 'si'
-    ? f('¿Cuál/es?', d.medNombre, true) +
-      f('Frecuencia', d.medFrecuencia) + f('Dosis', d.medDosis) +
-      f('Motivo', d.medMotivo, true)
+    ? f('Medicamento — ¿cuál/es?', d.medNombre, true) +
+      f('Medicamento — frecuencia', d.medFrecuencia) +
+      f('Medicamento — dosis', d.medDosis) +
+      f('Medicamento — motivo', d.medMotivo, true)
     : `<div class="cf full"><div class="cf-k">Medicamentos</div><div class="cf-v empty">No consume medicamentos</div></div>`;
 
   /* ── suplementos ── */
   const supHTML = d.tieneSup === 'si'
-    ? f('¿Cuál/es?', d.supNombre, true) +
-      f('Frecuencia', d.supFrecuencia) + f('Marca', d.supMarca)
+    ? f('Suplemento — ¿cuál/es?', d.supNombre, true) +
+      f('Suplemento — frecuencia', d.supFrecuencia) +
+      f('Suplemento — marca', d.supMarca)
     : `<div class="cf full"><div class="cf-k">Suplementos generales</div><div class="cf-v empty">No consume suplementos</div></div>`;
 
   const supDepHTML = d.tieneSupDep === 'si'
-    ? f('¿Cuál/es (dep.)?', d.supDepNombre, true) +
-      f('Frecuencia', d.supDepFrecuencia) + f('Marca', d.supDepMarca)
+    ? f('Sup. deportivo — ¿cuál/es?', d.supDepNombre, true) +
+      f('Sup. deportivo — frecuencia', d.supDepFrecuencia) +
+      f('Sup. deportivo — marca', d.supDepMarca)
     : `<div class="cf full"><div class="cf-k">Suplementos deportivos</div><div class="cf-v empty">No consume suplementos deportivos</div></div>`;
 
   /* ── objetivo con "otro" ── */
