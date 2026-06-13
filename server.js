@@ -1,34 +1,69 @@
 /* ================================================================
    CARLA GUERRERO NUTRICIONISTA  ·  server.js
-   Backend Express + PostgreSQL
    ================================================================ */
 
 require('dotenv').config();
-const express    = require('express');
-const { Pool }   = require('pg');
-const session    = require('express-session');
-const path       = require('path');
+const express = require('express');
+const session = require('express-session');
+const path    = require('path');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-/*
- * Trust Railway's reverse proxy so that:
- *  - req.secure = true when behind HTTPS
- *  - Secure cookies are sent/received correctly
- */
+/* Trust Railway / Render / Heroku reverse proxies */
 app.set('trust proxy', 1);
 
-/* ── DATABASE ──────────────────────────────────────────────────── */
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false
+/* ── BODY PARSERS ─────────────────────────────────────────────── */
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+/* ── SESSION ─────────────────────────────────────────────────── */
+app.use(session({
+  secret:            process.env.SESSION_SECRET || 'carla-dev-secret-2024',
+  resave:            false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    maxAge:   24 * 60 * 60 * 1000,
+    secure:   process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }
+}));
+
+/* ── STATIC FILES (public form) ──────────────────────────────── */
+/* Pre-create the static handler once, not on every request */
+const staticHandler = express.static(path.join(__dirname), { index: 'index.html' });
+
+app.use((req, res, next) => {
+  /* Let /admin* and /api* and /health fall through to route handlers */
+  if (
+    req.path === '/admin' ||
+    req.path.startsWith('/admin/') ||
+    req.path.startsWith('/api/') ||
+    req.path === '/health'
+  ) return next();
+  staticHandler(req, res, next);
 });
 
+/* ── DATABASE (lazy init) ─────────────────────────────────────── */
+let pool    = null;
+let dbReady = false;
+let dbError = null;
+
+function getPool() {
+  if (!pool) {
+    const { Pool } = require('pg');
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
+  }
+  return pool;
+}
+
 async function initDB() {
-  await pool.query(`
+  const db = getPool();
+  await db.query(`
     CREATE TABLE IF NOT EXISTS submissions (
       id          SERIAL PRIMARY KEY,
       nombre      VARCHAR(120),
@@ -40,44 +75,28 @@ async function initDB() {
       reviewed    BOOLEAN DEFAULT FALSE,
       reviewed_at TIMESTAMPTZ
     );
-    CREATE INDEX IF NOT EXISTS idx_submissions_created ON submissions(created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_submissions_reviewed ON submissions(reviewed);
+    CREATE INDEX IF NOT EXISTS idx_sub_created  ON submissions(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_sub_reviewed ON submissions(reviewed);
   `);
-  /* Migrate existing tables that lack the reviewed columns */
-  await pool.query(`
+  /* Safe migration for existing tables */
+  await db.query(`
     ALTER TABLE submissions ADD COLUMN IF NOT EXISTS reviewed    BOOLEAN DEFAULT FALSE;
     ALTER TABLE submissions ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
   `);
-  console.log('✅ Base de datos lista');
 }
 
-/* ── MIDDLEWARE ────────────────────────────────────────────────── */
-app.use(express.json({ limit: '2mb' }));
-app.use(express.urlencoded({ extended: true }));
-
-app.use(session({
-  secret:            process.env.SESSION_SECRET || 'carla-nutricionista-2024',
-  resave:            false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    maxAge:   24 * 60 * 60 * 1000,          // 24 h
-    secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
-  }
-}));
-
-/*
- * Serve public static files.
- * IMPORTANT: exclude /admin* routes so they always hit
- * the requireAdmin middleware, never the static handler.
- */
-app.use((req, res, next) => {
-  if (req.path === '/admin' || req.path.startsWith('/admin/')) return next();
-  express.static(path.join(__dirname), { index: 'index.html' })(req, res, next);
+/* ── HEALTH (always responds, even without DB) ──────────────── */
+app.get('/health', (_req, res) => {
+  res.json({
+    status : dbReady ? 'ok' : (dbError ? 'db_error' : 'starting'),
+    db     : dbReady ? 'connected' : (dbError || 'connecting…'),
+    port   : PORT,
+    env    : process.env.NODE_ENV || 'development',
+    ts     : new Date().toISOString()
+  });
 });
 
-/* ── AUTH MIDDLEWARE ────────────────────────────────────────────── */
+/* ── AUTH MIDDLEWARE ─────────────────────────────────────────── */
 function requireAdmin(req, res, next) {
   if (req.session?.isAdmin) return next();
   if (req.path.startsWith('/api/')) {
@@ -90,33 +109,27 @@ function requireAdmin(req, res, next) {
    PUBLIC API
    ================================================================ */
 
-/**
- * POST /api/submissions
- * Recibe el formulario completo y lo guarda en la BD.
- */
+/* POST /api/submissions — save form */
 app.post('/api/submissions', async (req, res) => {
+  if (!dbReady) {
+    return res.status(503).json({ success: false, message: 'Base de datos no disponible aún. Intenta en unos segundos.' });
+  }
   try {
-    const data = req.body;
-    if (!data || typeof data !== 'object') {
-      return res.status(400).json({ success: false, message: 'Datos inválidos' });
-    }
-
+    const data     = req.body;
     const nombre   = (data.nombre   || '').toString().trim().slice(0, 120);
     const apellido = (data.apellido || '').toString().trim().slice(0, 120);
     const email    = (data.email    || '').toString().trim().slice(0, 250);
-    const tel      = data.telefono ? `+569${data.telefono}` : null;
+    const tel      = data.telefono  ? `+569${data.telefono}` : null;
 
-    await pool.query(
+    await getPool().query(
       `INSERT INTO submissions (nombre, apellido, email, telefono, data)
        VALUES ($1, $2, $3, $4, $5)`,
       [nombre || null, apellido || null, email || null, tel, JSON.stringify(data)]
     );
-
     res.json({ success: true, message: 'Ficha guardada correctamente' });
-
   } catch (err) {
-    console.error('Error guardando submission:', err);
-    res.status(500).json({ success: false, message: 'Error al guardar la ficha. Intenta nuevamente.' });
+    console.error('Error guardando submission:', err.message);
+    res.status(500).json({ success: false, message: 'Error al guardar la ficha.' });
   }
 });
 
@@ -124,174 +137,148 @@ app.post('/api/submissions', async (req, res) => {
    ADMIN ROUTES
    ================================================================ */
 
-/* GET /admin/login — formulario de acceso */
+/* GET /admin/login */
 app.get('/admin/login', (req, res) => {
   if (req.session?.isAdmin) return res.redirect('/admin');
-  const error = req.query.error === '1';
-  res.send(adminLoginHTML(error));
+  res.send(loginHTML(req.query.error === '1', null));
 });
 
-/* POST /admin/login — autenticación */
+/* POST /admin/login */
 app.post('/admin/login', (req, res) => {
   const password = (req.body.password || '').trim();
   const correct  = process.env.ADMIN_PASSWORD || '';
 
   if (!correct) {
-    return res.send(adminLoginHTML(false, '⚠️ ADMIN_PASSWORD no está configurada en el servidor.'));
+    return res.send(loginHTML(false, '⚠️ ADMIN_PASSWORD no está configurada.'));
+  }
+  if (password !== correct) {
+    return res.redirect('/admin/login?error=1');
   }
 
-  if (password === correct) {
-    req.session.isAdmin = true;
-    /*
-     * Explicitly save the session BEFORE redirecting.
-     * Without this, the async MemoryStore write can race
-     * with the redirect, leaving the cookie unset and
-     * causing an infinite redirect loop back to /admin/login.
-     */
-    req.session.save(err => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.send(adminLoginHTML(false, '⚠️ Error al iniciar sesión. Intenta nuevamente.'));
-      }
-      res.redirect('/admin');
-    });
-  } else {
-    res.redirect('/admin/login?error=1');
-  }
+  req.session.isAdmin = true;
+  req.session.save(err => {
+    if (err) {
+      console.error('Session save error:', err);
+      return res.send(loginHTML(false, '⚠️ Error de sesión. Intenta nuevamente.'));
+    }
+    res.redirect('/admin');
+  });
 });
 
 /* GET /admin/logout */
 app.get('/admin/logout', (req, res) => {
-  req.session.destroy();
-  res.redirect('/admin/login');
+  req.session.destroy(() => res.redirect('/admin/login'));
 });
 
-/* GET /admin — dashboard principal */
-app.get('/admin', requireAdmin, (req, res) => {
+/* GET /admin — dashboard */
+app.get('/admin', requireAdmin, (_req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-/* ── ADMIN API (protected) ─────────────────────────────────────── */
+/* ── PROTECTED API ───────────────────────────────────────────── */
 
-/* GET /api/submissions — lista todas las fichas */
 app.get('/api/submissions', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false, message: 'DB no disponible' });
   try {
-    const result = await pool.query(
-      `SELECT id, nombre, apellido, email, telefono, reviewed,
-              to_char(created_at AT TIME ZONE 'America/Santiago', 'DD/MM/YYYY HH24:MI') AS fecha,
-              to_char(created_at AT TIME ZONE 'America/Santiago', 'YYYY-MM-DD') AS fecha_iso,
-              created_at
-       FROM submissions
-       ORDER BY created_at DESC
-       LIMIT 1000`
-    );
-    res.json({ success: true, submissions: result.rows });
+    const r = await getPool().query(`
+      SELECT id, nombre, apellido, email, telefono, reviewed,
+             to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha,
+             to_char(created_at AT TIME ZONE 'America/Santiago','YYYY-MM-DD')         AS fecha_iso,
+             created_at
+      FROM submissions ORDER BY created_at DESC LIMIT 1000`);
+    res.json({ success: true, submissions: r.rows });
   } catch (err) {
-    console.error('Error listando submissions:', err);
-    res.status(500).json({ success: false, message: 'Error al obtener fichas' });
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
-/* GET /api/submissions/:id — detalle de una ficha */
 app.get('/api/submissions/:id', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false, message: 'DB no disponible' });
   try {
     const { id } = req.params;
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
-
-    const result = await pool.query(
-      `SELECT id, nombre, apellido, email, telefono, reviewed, reviewed_at,
-              to_char(created_at AT TIME ZONE 'America/Santiago', 'DD/MM/YYYY HH24:MI') AS fecha,
-              data
-       FROM submissions WHERE id = $1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Ficha no encontrada' });
-    }
-    res.json({ success: true, submission: result.rows[0] });
-
+    const r = await getPool().query(`
+      SELECT id, nombre, apellido, email, telefono, reviewed, reviewed_at,
+             to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha,
+             data
+      FROM submissions WHERE id = $1`, [id]);
+    if (!r.rows.length) return res.status(404).json({ success: false });
+    res.json({ success: true, submission: r.rows[0] });
   } catch (err) {
-    console.error('Error obteniendo submission:', err);
     res.status(500).json({ success: false });
   }
 });
 
-/* PATCH /api/submissions/:id/review — marcar revisada o no revisada */
 app.patch('/api/submissions/:id/review', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
   try {
     const { id } = req.params;
     const { reviewed } = req.body;
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
-
-    await pool.query(
-      `UPDATE submissions
-       SET reviewed = $1, reviewed_at = $2
-       WHERE id = $3`,
+    await getPool().query(
+      `UPDATE submissions SET reviewed=$1, reviewed_at=$2 WHERE id=$3`,
       [Boolean(reviewed), reviewed ? new Date() : null, id]
     );
     res.json({ success: true });
   } catch (err) {
-    console.error('Error actualizando reviewed:', err);
     res.status(500).json({ success: false });
   }
 });
 
-/* DELETE /api/submissions/:id — eliminar ficha */
 app.delete('/api/submissions/:id', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
   try {
     const { id } = req.params;
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
-    await pool.query('DELETE FROM submissions WHERE id = $1', [id]);
+    await getPool().query('DELETE FROM submissions WHERE id=$1', [id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false });
   }
 });
 
-/* GET /api/stats — totales rápidos */
 app.get('/api/stats', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.json({ success: true, stats: { total: 0, sin_revisar: 0, hoy: 0, semana: 0 } });
   try {
-    const result = await pool.query(`
+    const r = await getPool().query(`
       SELECT
-        COUNT(*)                                                             AS total,
-        COUNT(*) FILTER (WHERE reviewed = FALSE)                            AS sin_revisar,
-        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours')   AS hoy,
-        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')     AS semana
-      FROM submissions
-    `);
-    res.json({ success: true, stats: result.rows[0] });
+        COUNT(*)                                                           AS total,
+        COUNT(*) FILTER (WHERE reviewed = FALSE)                          AS sin_revisar,
+        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours') AS hoy,
+        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')   AS semana
+      FROM submissions`);
+    res.json({ success: true, stats: r.rows[0] });
   } catch (err) {
     res.status(500).json({ success: false });
   }
 });
 
 /* ================================================================
-   INLINE ADMIN LOGIN PAGE
+   LOGIN PAGE HTML
    ================================================================ */
-function adminLoginHTML(error, msg) {
+function loginHTML(error, msg) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Acceso · Carla Guerrero Nutricionista</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,700;1,600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'DM Sans',sans-serif;background:#FAF7F2;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
     .card{background:#fff;border-radius:24px;padding:52px 44px;max-width:420px;width:100%;box-shadow:0 24px 80px rgba(30,20,12,.12);text-align:center;border:1px solid rgba(180,150,130,.18)}
-    .logo{width:120px;height:auto;margin:0 auto 28px;display:block;mix-blend-mode:multiply}
+    .logo{width:110px;height:auto;margin:0 auto 28px;display:block;mix-blend-mode:multiply}
     h1{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:#0E0A06;margin-bottom:6px}
-    .sub{font-size:.85rem;color:#3D2D24;margin-bottom:32px;letter-spacing:.04em}
-    label{display:block;font-size:.78rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#2A1F18;margin-bottom:6px;text-align:left}
+    .sub{font-size:.85rem;color:#3D2D24;margin-bottom:32px}
+    label{display:block;font-size:.75rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#2A1F18;margin-bottom:6px;text-align:left}
     input[type=password]{width:100%;padding:14px 18px;border:1.5px solid rgba(180,150,130,.35);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;color:#1C1410;background:#FDFAF6;transition:.25s;outline:none;margin-bottom:18px}
     input[type=password]:focus{border-color:#C96848;box-shadow:0 0 0 4px rgba(201,104,72,.12)}
-    .error-msg{background:#FFF0ED;border:1px solid rgba(201,104,72,.25);border-radius:8px;padding:10px 14px;font-size:.85rem;color:#A84830;margin-bottom:18px;text-align:left}
-    .warn-msg{background:#FBF3E0;border:1px solid rgba(196,144,58,.25);border-radius:8px;padding:10px 14px;font-size:.85rem;color:#8A6030;margin-bottom:18px;text-align:left}
+    .err{background:#FFF0ED;border:1px solid rgba(201,104,72,.25);border-radius:8px;padding:10px 14px;font-size:.84rem;color:#A84830;margin-bottom:18px;text-align:left}
+    .warn{background:#FBF3E0;border:1px solid rgba(196,144,58,.25);border-radius:8px;padding:10px 14px;font-size:.84rem;color:#8A6030;margin-bottom:18px;text-align:left}
     button{width:100%;padding:15px;border:none;border-radius:99px;background:linear-gradient(135deg,#C96848,#A84830);color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:.25s;box-shadow:0 8px 28px rgba(201,104,72,.32)}
-    button:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(201,104,72,.42)}
-    .back{display:block;margin-top:22px;font-size:.82rem;color:#7A6058;text-decoration:none;transition:.2s}
+    button:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(201,104,72,.4)}
+    .back{display:block;margin-top:22px;font-size:.82rem;color:#7A6058;text-decoration:none}
     .back:hover{color:#C96848}
   </style>
 </head>
@@ -300,10 +287,8 @@ function adminLoginHTML(error, msg) {
     <img src="/logo.png" class="logo" alt="Logo"/>
     <h1>Área Privada</h1>
     <p class="sub">Carla Guerrero · Nutricionista</p>
-
-    ${error ? '<div class="error-msg">❌ Contraseña incorrecta. Intenta nuevamente.</div>' : ''}
-    ${msg   ? `<div class="warn-msg">${msg}</div>` : ''}
-
+    ${error ? '<div class="err">❌ Contraseña incorrecta. Intenta nuevamente.</div>' : ''}
+    ${msg   ? `<div class="warn">${msg}</div>` : ''}
     <form method="POST" action="/admin/login">
       <label for="pwd">Contraseña</label>
       <input type="password" id="pwd" name="password" placeholder="••••••••" required autofocus/>
@@ -317,35 +302,18 @@ function adminLoginHTML(error, msg) {
 
 /* ================================================================
    BOOT — listen FIRST, then connect DB
-   ================================================================
-   Order matters for Railway:
-   1. app.listen()  → Railway detects the port immediately ✅
-   2. initDB()      → connects to PostgreSQL after server is up
-   If DB fails, the server still responds (shows setup instructions).
    ================================================================ */
-
-let dbReady = false;   // becomes true once initDB() succeeds
-let dbError = null;    // stores any DB connection error
-
-/* /health — Railway and uptime monitors can ping this */
-app.get('/health', (req, res) => {
-  res.json({
-    status:  dbReady ? 'ok' : 'starting',
-    db:      dbReady ? 'connected' : (dbError ? dbError : 'connecting…'),
-    port:    PORT,
-    env:     process.env.NODE_ENV || 'development',
-    ts:      new Date().toISOString()
-  });
-});
-
-/* Start listening immediately so Railway sees an active port */
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🌿 Servidor escuchando en 0.0.0.0:${PORT}`);
-  console.log(`📋 Dashboard admin: /admin`);
-  console.log(`📝 Formulario público: /`);
-  console.log(`🔍 Health check: /health\n`);
+  console.log(`\n🌿 Servidor listo en 0.0.0.0:${PORT}`);
+  console.log(`   NODE_ENV  : ${process.env.NODE_ENV || 'development'}`);
+  console.log(`   DB URL    : ${process.env.DATABASE_URL ? '✅ configurada' : '❌ NO configurada'}`);
+  console.log(`   /health   : http://localhost:${PORT}/health\n`);
 
-  /* Connect to DB after server is already up */
+  if (!process.env.DATABASE_URL) {
+    console.warn('⚠️  DATABASE_URL no está definida. El servidor responde pero la BD no está disponible.');
+    return;
+  }
+
   initDB()
     .then(() => {
       dbReady = true;
@@ -353,8 +321,6 @@ app.listen(PORT, '0.0.0.0', () => {
     })
     .catch(err => {
       dbError = err.message;
-      console.error('❌ Error de base de datos:', err.message);
-      console.error('   → Verifica DATABASE_URL en las variables de Railway.\n');
-      /* Do NOT exit — server keeps running so Railway stays green */
+      console.error('❌ Error DB:', err.message);
     });
 });
