@@ -12,6 +12,13 @@ const path       = require('path');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+/*
+ * Trust Railway's reverse proxy so that:
+ *  - req.secure = true when behind HTTPS
+ *  - Secure cookies are sent/received correctly
+ */
+app.set('trust proxy', 1);
+
 /* ── DATABASE ──────────────────────────────────────────────────── */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -60,10 +67,15 @@ app.use(session({
   }
 }));
 
-/* Serve public static files (form, styles, script, logo) */
-app.use(express.static(path.join(__dirname), {
-  index: 'index.html'
-}));
+/*
+ * Serve public static files.
+ * IMPORTANT: exclude /admin* routes so they always hit
+ * the requireAdmin middleware, never the static handler.
+ */
+app.use((req, res, next) => {
+  if (req.path === '/admin' || req.path.startsWith('/admin/')) return next();
+  express.static(path.join(__dirname), { index: 'index.html' })(req, res, next);
+});
 
 /* ── AUTH MIDDLEWARE ────────────────────────────────────────────── */
 function requireAdmin(req, res, next) {
@@ -130,7 +142,19 @@ app.post('/admin/login', (req, res) => {
 
   if (password === correct) {
     req.session.isAdmin = true;
-    res.redirect('/admin');
+    /*
+     * Explicitly save the session BEFORE redirecting.
+     * Without this, the async MemoryStore write can race
+     * with the redirect, leaving the cookie unset and
+     * causing an infinite redirect loop back to /admin/login.
+     */
+    req.session.save(err => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.send(adminLoginHTML(false, '⚠️ Error al iniciar sesión. Intenta nuevamente.'));
+      }
+      res.redirect('/admin');
+    });
   } else {
     res.redirect('/admin/login?error=1');
   }
