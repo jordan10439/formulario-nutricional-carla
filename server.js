@@ -316,15 +316,45 @@ function adminLoginHTML(error, msg) {
 }
 
 /* ================================================================
-   BOOT
+   BOOT — listen FIRST, then connect DB
+   ================================================================
+   Order matters for Railway:
+   1. app.listen()  → Railway detects the port immediately ✅
+   2. initDB()      → connects to PostgreSQL after server is up
+   If DB fails, the server still responds (shows setup instructions).
    ================================================================ */
-initDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n🌿 Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`📋 Dashboard admin: http://localhost:${PORT}/admin`);
-    console.log(`📝 Formulario público: http://localhost:${PORT}/\n`);
+
+let dbReady = false;   // becomes true once initDB() succeeds
+let dbError = null;    // stores any DB connection error
+
+/* /health — Railway and uptime monitors can ping this */
+app.get('/health', (req, res) => {
+  res.json({
+    status:  dbReady ? 'ok' : 'starting',
+    db:      dbReady ? 'connected' : (dbError ? dbError : 'connecting…'),
+    port:    PORT,
+    env:     process.env.NODE_ENV || 'development',
+    ts:      new Date().toISOString()
   });
-}).catch(err => {
-  console.error('❌ Error iniciando servidor:', err.message);
-  process.exit(1);
+});
+
+/* Start listening immediately so Railway sees an active port */
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🌿 Servidor escuchando en 0.0.0.0:${PORT}`);
+  console.log(`📋 Dashboard admin: /admin`);
+  console.log(`📝 Formulario público: /`);
+  console.log(`🔍 Health check: /health\n`);
+
+  /* Connect to DB after server is already up */
+  initDB()
+    .then(() => {
+      dbReady = true;
+      console.log('✅ Base de datos conectada y lista.\n');
+    })
+    .catch(err => {
+      dbError = err.message;
+      console.error('❌ Error de base de datos:', err.message);
+      console.error('   → Verifica DATABASE_URL en las variables de Railway.\n');
+      /* Do NOT exit — server keeps running so Railway stays green */
+    });
 });
