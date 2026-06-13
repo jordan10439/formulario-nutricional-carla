@@ -4,914 +4,867 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Dashboard · Carla Guerrero Nutricionista</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600;1,700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <!-- SheetJS for Excel export -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
   <style>
-  /* ══════════════════════════════════════════════════════════════
-     BASE
-  ══════════════════════════════════════════════════════════════ */
+  /* ══════════════════════════════════════════
+     RESET & BASE
+  ══════════════════════════════════════════ */
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   html{font-size:16px;scroll-behavior:smooth}
-  body{font-family:'DM Sans',sans-serif;background:#FAF7F2;color:#1C1410;min-height:100vh;-webkit-font-smoothing:antialiased}
-  ::-webkit-scrollbar{width:6px;height:6px}
-  ::-webkit-scrollbar-track{background:#F0EBE5}
-  ::-webkit-scrollbar-thumb{background:#C4A090;border-radius:3px}
+  body{
+    font-family:'DM Sans',sans-serif;
+    background:#F7F3EE;
+    color:#1C1410;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::-webkit-scrollbar{width:5px}
+  ::-webkit-scrollbar-track{background:#EDE8E2}
+  ::-webkit-scrollbar-thumb{background:#C4A898;border-radius:3px}
 
-  /* ══════════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════
      TOPBAR
-  ══════════════════════════════════════════════════════════════ */
+  ══════════════════════════════════════════ */
   .topbar{
-    background:#fff;border-bottom:1px solid rgba(180,150,130,.2);
-    padding:0 36px;height:66px;display:flex;align-items:center;justify-content:space-between;
-    position:sticky;top:0;z-index:200;box-shadow:0 2px 14px rgba(30,20,12,.06);
+    position:sticky;top:0;z-index:100;
+    background:#fff;
+    border-bottom:1px solid rgba(180,150,130,.18);
+    box-shadow:0 1px 12px rgba(30,20,12,.06);
+    padding:0 32px;height:64px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
   }
-  .topbar-left{display:flex;align-items:center;gap:16px}
-  .topbar-logo{width:52px;height:auto;mix-blend-mode:multiply}
-  .topbar-brand .title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:#0E0A06}
-  .topbar-brand .role{font-size:.7rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#C96848;margin-top:1px}
-  .topbar-right{display:flex;align-items:center;gap:10px}
-  .btn-sm{
-    padding:8px 18px;border-radius:99px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s;
-    border:1.5px solid rgba(180,150,130,.3);background:transparent;color:#3D2D24;
+  .topbar-left{display:flex;align-items:center;gap:14px}
+  .t-logo{width:46px;height:auto;mix-blend-mode:multiply;flex-shrink:0}
+  .t-brand-title{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.25rem;font-weight:700;color:#0E0A06;line-height:1.1;
   }
-  .btn-sm:hover{border-color:#C96848;color:#C96848;background:#FDF5F0}
-  .btn-sm.danger:hover{border-color:#C04040;color:#C04040;background:#FFF0F0}
+  .t-brand-sub{
+    font-size:.66rem;font-weight:700;letter-spacing:.22em;
+    text-transform:uppercase;color:#C96848;
+  }
+  .topbar-right{display:flex;align-items:center;gap:8px}
+  .t-btn{
+    padding:8px 18px;border-radius:99px;border:1.5px solid rgba(180,150,130,.3);
+    background:transparent;color:#3D2D24;
+    font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;
+    cursor:pointer;transition:.2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+  }
+  .t-btn:hover{border-color:#C96848;color:#C96848;background:#FDF5F0}
+  .t-btn.red:hover{border-color:#C04040;color:#C04040;background:#FFF0F0}
 
-  /* ══════════════════════════════════════════════════════════════
-     MAIN LAYOUT
-  ══════════════════════════════════════════════════════════════ */
-  .main{max-width:1300px;margin:0 auto;padding:36px 28px 100px}
+  /* ══════════════════════════════════════════
+     MAIN
+  ══════════════════════════════════════════ */
+  .main{max-width:1280px;margin:0 auto;padding:36px 28px 100px}
 
   /* ── PAGE HEADER ── */
-  .page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap}
-  .page-header-text h1{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:800;color:#0E0A06;line-height:1.05}
-  .page-header-text p{font-size:.95rem;color:#4A3428;margin-top:3px}
-  .export-btns{display:flex;gap:8px;flex-wrap:wrap}
-  .btn-export{
-    display:flex;align-items:center;gap:7px;padding:10px 20px;border-radius:99px;
-    font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;transition:.22s;
-    border:1.5px solid rgba(180,150,130,.3);background:#fff;color:#2A1F18;
-    box-shadow:0 2px 8px rgba(30,20,12,.05);
+  .page-header{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    gap:16px;margin-bottom:28px;flex-wrap:wrap;
   }
-  .btn-export:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(30,20,12,.1)}
-  .btn-export.xlsx{border-color:rgba(34,139,34,.3);color:#1A6B1A}
-  .btn-export.xlsx:hover{background:#F0FAF0;border-color:#228B22}
-  .btn-export.csv{border-color:rgba(30,100,180,.3);color:#1A4A8A}
-  .btn-export.csv:hover{background:#F0F4FF;border-color:#1E64B4}
+  .page-header h1{
+    font-family:'Cormorant Garamond',serif;
+    font-size:2.6rem;font-weight:800;color:#0E0A06;line-height:1.05;
+  }
+  .page-header p{font-size:.93rem;color:#5A4030;margin-top:4px}
+  .export-row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn-export{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:9px 18px;border-radius:99px;
+    font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;
+    cursor:pointer;transition:.22s;border:1.5px solid;
+    background:#fff;box-shadow:0 2px 8px rgba(30,20,12,.05);
+  }
+  .btn-export:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(30,20,12,.1)}
+  .btn-export.xlsx{border-color:rgba(34,139,34,.28);color:#1A6B1A}
+  .btn-export.xlsx:hover{background:#F0FAF0}
+  .btn-export.csv{border-color:rgba(30,100,180,.28);color:#1A4A8A}
+  .btn-export.csv:hover{background:#F0F4FF}
 
   /* ── STATS ── */
-  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
-  .stat-card{
-    background:#fff;border:1px solid rgba(180,150,130,.18);border-radius:16px;
-    padding:22px 24px;box-shadow:0 4px 18px rgba(30,20,12,.055);
-    display:flex;align-items:center;gap:16px;transition:.2s;
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+  .stat{
+    background:#fff;border:1px solid rgba(180,150,130,.16);border-radius:14px;
+    padding:20px 22px;box-shadow:0 3px 14px rgba(30,20,12,.05);
+    display:flex;align-items:center;gap:14px;transition:.2s;
   }
-  .stat-card:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(30,20,12,.09)}
-  .stat-icon{font-size:1.8rem;flex-shrink:0}
-  .stat-num{font-size:2.2rem;font-weight:800;color:#0E0A06;font-family:'Cormorant Garamond',serif;line-height:1}
-  .stat-lbl{font-size:.74rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#7A6058;margin-top:4px}
-  .stat-card.unread .stat-num{color:#C96848}
-  .stat-card.unread{border-color:rgba(201,104,72,.22);background:linear-gradient(135deg,#fff 60%,#FDF5F0)}
+  .stat:hover{box-shadow:0 6px 24px rgba(30,20,12,.09);transform:translateY(-1px)}
+  .stat-ico{font-size:1.7rem;flex-shrink:0}
+  .stat-num{
+    font-family:'Cormorant Garamond',serif;
+    font-size:2rem;font-weight:800;color:#0E0A06;line-height:1;
+  }
+  .stat-lbl{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8A6A58;margin-top:3px}
+  .stat.accent{border-color:rgba(201,104,72,.2);background:linear-gradient(135deg,#fff 60%,#FDF5F0)}
+  .stat.accent .stat-num{color:#C96848}
 
-  /* ── FILTERS ── */
-  .filters-bar{
-    background:#fff;border:1px solid rgba(180,150,130,.2);border-radius:14px;
-    padding:16px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  /* ── SEARCH + FILTERS ── */
+  .search-bar{
+    background:#fff;border:1px solid rgba(180,150,130,.18);border-radius:14px;
+    padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     margin-bottom:18px;box-shadow:0 2px 10px rgba(30,20,12,.04);
   }
-  .filter-group{display:flex;align-items:center;gap:8px;flex:1;min-width:200px}
-  .filter-group label{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7A6058;white-space:nowrap}
-  .filter-input{
-    flex:1;padding:9px 14px;border:1.5px solid rgba(180,150,130,.28);border-radius:8px;
-    font-family:'DM Sans',sans-serif;font-size:.9rem;color:#1C1410;background:#FDFAF6;
-    outline:none;transition:.2s;
+  .search-wrap{
+    display:flex;align-items:center;gap:10px;flex:2;min-width:220px;
+    background:#F7F3EE;border:1.5px solid rgba(180,150,130,.22);border-radius:10px;
+    padding:9px 14px;transition:.2s;
   }
-  .filter-input:focus{border-color:#C96848;box-shadow:0 0 0 3px rgba(201,104,72,.1)}
-  .filter-input::placeholder{color:#A89088}
-  .filter-sep{width:1px;height:32px;background:rgba(180,150,130,.25);flex-shrink:0}
-  .btn-filter-clear{
-    padding:9px 18px;border-radius:8px;border:1.5px solid rgba(180,150,130,.3);
-    background:transparent;color:#7A6058;font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;
+  .search-wrap:focus-within{border-color:#C96848;box-shadow:0 0 0 3px rgba(201,104,72,.1);background:#fff}
+  .search-ico{color:#A89088;font-size:1rem;flex-shrink:0}
+  .search-input{
+    border:none;background:transparent;outline:none;
+    font-family:'DM Sans',sans-serif;font-size:.93rem;color:#1C1410;width:100%;
   }
-  .btn-filter-clear:hover{border-color:#C96848;color:#C96848}
+  .search-input::placeholder{color:#A89088}
+  .filter-sep{width:1px;height:28px;background:rgba(180,150,130,.22);flex-shrink:0}
+  .filter-sel,.filter-date{
+    padding:9px 12px;border:1.5px solid rgba(180,150,130,.22);border-radius:10px;
+    background:#F7F3EE;font-family:'DM Sans',sans-serif;font-size:.86rem;color:#1C1410;
+    outline:none;cursor:pointer;transition:.2s;
+  }
+  .filter-sel:focus,.filter-date:focus{border-color:#C96848;background:#fff;box-shadow:0 0 0 3px rgba(201,104,72,.1)}
+  .filter-date{min-width:138px}
+  .btn-clear{
+    padding:8px 16px;border-radius:10px;border:1.5px solid rgba(180,150,130,.25);
+    background:transparent;color:#8A6A58;font-family:'DM Sans',sans-serif;
+    font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;
+  }
+  .btn-clear:hover{border-color:#C96848;color:#C96848}
 
-  /* ── TABLE CONTROLS ── */
-  .table-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
-  .result-count{font-size:.84rem;color:#7A6058;font-weight:600}
-  .filter-tag{
-    display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;
-    background:#FDF5F0;border:1px solid rgba(201,104,72,.2);font-size:.76rem;font-weight:700;color:#A84830;
+  /* ── RESULT BAR ── */
+  .result-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+  .result-count{font-size:.85rem;color:#8A6A58;font-weight:600}
+  .filter-pills{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:4px 10px;border-radius:99px;
+    background:#FDF5F0;border:1px solid rgba(201,104,72,.2);
+    font-size:.74rem;font-weight:700;color:#A84830;
   }
 
-  /* ── TABLE ── */
-  .table-wrap{
-    background:#fff;border:1px solid rgba(180,150,130,.18);border-radius:18px;
-    overflow:hidden;box-shadow:0 6px 32px rgba(30,20,12,.08);
+  /* ══════════════════════════════════════════
+     CARDS GRID
+  ══════════════════════════════════════════ */
+  .cards-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:16px;
   }
-  table{width:100%;border-collapse:collapse}
-  thead th{
-    padding:13px 16px;text-align:left;
-    font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
-    color:#7A6058;background:#FBF8F3;border-bottom:1px solid rgba(180,150,130,.18);
-    white-space:nowrap;
-  }
-  thead th.sortable{cursor:pointer;user-select:none}
-  thead th.sortable:hover{color:#C96848}
-  tbody tr{border-bottom:1px solid rgba(180,150,130,.1);transition:background .15s;cursor:pointer}
-  tbody tr:last-child{border-bottom:none}
-  tbody tr:hover{background:#FDF5F0}
-  tbody tr.unread-row{background:linear-gradient(90deg,rgba(201,104,72,.04) 0%,transparent 60%)}
-  tbody tr.unread-row:hover{background:linear-gradient(90deg,rgba(201,104,72,.08) 0%,#FDF5F0 60%)}
-  td{padding:14px 16px;font-size:.91rem;color:#2A1F18;vertical-align:middle}
-  td.td-status{width:38px;text-align:center;padding-right:4px}
-  td.td-name{font-weight:700;color:#0E0A06}
-  td.td-email{color:#3D2D24}
-  td.td-phone{color:#4A3428}
-  td.td-date{color:#7A6058;font-size:.84rem;white-space:nowrap}
-  td.td-actions{text-align:right;white-space:nowrap;padding-right:14px}
 
-  /* status dot */
-  .dot-new{
-    display:inline-block;width:10px;height:10px;border-radius:50%;
-    background:#C96848;box-shadow:0 0 0 3px rgba(201,104,72,.2);
-    animation:pulse 2s ease infinite;flex-shrink:0;
+  .patient-card{
+    background:#fff;
+    border:1px solid rgba(180,150,130,.16);
+    border-radius:18px;
+    padding:22px 24px;
+    box-shadow:0 3px 16px rgba(30,20,12,.06);
+    transition:.22s;
+    display:flex;flex-direction:column;gap:0;
+    position:relative;overflow:hidden;
   }
-  .dot-ok{display:inline-block;width:10px;height:10px;border-radius:50%;background:#C4D4BC;flex-shrink:0}
-  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(201,104,72,.2)}50%{box-shadow:0 0 0 6px rgba(201,104,72,.08)}}
-
-  .btn-row{
-    padding:5px 14px;border-radius:99px;font-family:'DM Sans',sans-serif;font-size:.78rem;
-    font-weight:700;cursor:pointer;transition:.18s;border:1.5px solid;margin-left:4px;
+  .patient-card:hover{
+    box-shadow:0 10px 36px rgba(30,20,12,.12);
+    transform:translateY(-2px);
+    border-color:rgba(201,104,72,.22);
   }
-  .btn-view{border-color:rgba(201,104,72,.35);color:#C96848;background:transparent}
-  .btn-view:hover{background:#C96848;color:#fff;border-color:#C96848}
-  .btn-review-row{border-color:rgba(180,150,130,.3);color:#7A6058;background:transparent}
-  .btn-review-row:hover{border-color:#5A8A50;color:#5A8A50;background:#F2F8F0}
-  .btn-review-row.done{border-color:rgba(90,138,80,.3);color:#5A8A50}
-  .btn-del-row{border-color:rgba(180,150,130,.25);color:#A89088;background:transparent}
-  .btn-del-row:hover{border-color:#C04040;color:#C04040;background:#FFF0F0}
+  .patient-card.is-new{border-left:3px solid #C96848}
+  .patient-card.is-new::before{
+    content:'';
+    position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,#C96848,#E8A878,transparent);
+  }
 
-  /* ── EMPTY / LOADING ── */
-  .state-box{text-align:center;padding:80px 24px}
-  .state-box .icon{font-size:3.2rem;margin-bottom:18px;display:block}
+  /* Card top row */
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .card-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:4px 10px;border-radius:99px;
+    font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    border:1.5px solid;
+  }
+  .badge.new{
+    border-color:rgba(201,104,72,.35);color:#A84830;background:#FDF5F0;
+  }
+  .badge.new::before{
+    content:'';display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:#C96848;animation:blink 1.8s ease infinite;
+  }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+  .badge.reviewed{border-color:rgba(80,140,70,.3);color:#3A7030;background:#F2F8EF}
+  .card-date{font-size:.78rem;color:#A89088;font-weight:500;white-space:nowrap;flex-shrink:0;margin-top:2px}
+
+  /* Card name */
+  .card-name{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.45rem;font-weight:700;color:#0E0A06;
+    line-height:1.15;margin-bottom:10px;
+  }
+
+  /* Card contact */
+  .card-contact{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+  .card-contact-item{
+    display:flex;align-items:center;gap:7px;
+    font-size:.85rem;color:#4A3428;
+  }
+  .contact-ico{font-size:.9rem;flex-shrink:0;width:16px;text-align:center}
+
+  /* Card divider */
+  .card-div{height:1px;background:rgba(180,150,130,.14);margin-bottom:14px}
+
+  /* Card actions */
+  .card-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .btn-detail{
+    flex:1;padding:10px 0;border-radius:10px;border:none;
+    background:linear-gradient(135deg,#C96848,#A84830);
+    color:#fff;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;
+    cursor:pointer;transition:.2s;letter-spacing:.02em;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    box-shadow:0 4px 14px rgba(201,104,72,.3);
+  }
+  .btn-detail:hover{transform:translateY(-1px);box-shadow:0 7px 22px rgba(201,104,72,.4)}
+  .btn-review-card{
+    padding:9px 14px;border-radius:10px;
+    border:1.5px solid rgba(180,150,130,.3);
+    background:transparent;color:#8A6A58;
+    font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;
+    cursor:pointer;transition:.2s;white-space:nowrap;
+  }
+  .btn-review-card:hover{border-color:#5A9048;color:#3A7030;background:#F2F8EF}
+  .btn-review-card.done{border-color:rgba(80,140,70,.35);color:#3A7030;background:#F2F8EF}
+  .btn-del-card{
+    padding:9px 12px;border-radius:10px;
+    border:1.5px solid rgba(180,150,130,.22);
+    background:transparent;color:#C4B0A8;
+    font-family:'DM Sans',sans-serif;font-size:.84rem;
+    cursor:pointer;transition:.2s;
+  }
+  .btn-del-card:hover{border-color:#C04040;color:#C04040;background:#FFF0F0}
+
+  /* ══════════════════════════════════════════
+     EMPTY / LOADING STATES
+  ══════════════════════════════════════════ */
+  .state-box{
+    text-align:center;padding:80px 24px;
+    background:#fff;border:1px solid rgba(180,150,130,.14);
+    border-radius:18px;box-shadow:0 3px 16px rgba(30,20,12,.05);
+  }
+  .state-box .ico{font-size:3rem;display:block;margin-bottom:16px}
   .state-box h3{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:#2A1F18;margin-bottom:8px}
-  .state-box p{color:#7A6058;font-size:.93rem}
-  .spin-icon{animation:spin 1s linear infinite;display:inline-block;font-size:1.9rem}
+  .state-box p{color:#8A6A58;font-size:.92rem}
+  .spin{animation:spin 1s linear infinite;display:inline-block}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* ══════════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════
      MODAL — FICHA CLÍNICA
-  ══════════════════════════════════════════════════════════════ */
+  ══════════════════════════════════════════ */
   .modal-bg{
-    position:fixed;inset:0;background:rgba(14,10,6,.52);backdrop-filter:blur(5px);
-    display:none;align-items:flex-start;justify-content:center;z-index:500;padding:24px;
-    overflow-y:auto;
+    position:fixed;inset:0;z-index:500;
+    background:rgba(14,10,6,.5);backdrop-filter:blur(5px);
+    display:none;align-items:flex-start;justify-content:center;
+    padding:24px;overflow-y:auto;
   }
-  .modal-bg.open{display:flex;animation:fade-bg .22s ease}
+  .modal-bg.open{display:flex;animation:fade-bg .2s ease}
   @keyframes fade-bg{from{opacity:0}to{opacity:1}}
 
   .modal{
-    background:#fff;border-radius:22px;max-width:780px;width:100%;margin:auto;
-    box-shadow:0 40px 120px rgba(14,10,6,.22);
-    animation:modal-up .32s cubic-bezier(.34,1.56,.64,1) both;
+    background:#fff;border-radius:22px;
+    max-width:780px;width:100%;margin:auto;
+    box-shadow:0 40px 100px rgba(14,10,6,.2);
+    animation:modal-up .3s cubic-bezier(.34,1.56,.64,1) both;
   }
   @keyframes modal-up{from{transform:translateY(28px) scale(.96);opacity:0}to{transform:none;opacity:1}}
 
   /* Modal header */
   .modal-hdr{
-    padding:28px 32px 22px;border-bottom:1px solid rgba(180,150,130,.18);
+    padding:28px 32px 22px;
+    border-bottom:1px solid rgba(180,150,130,.16);
+    background:linear-gradient(135deg,#FDFAF6,#FDF5F0);
+    border-radius:22px 22px 0 0;
     display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
-    background:linear-gradient(135deg,#FDFAF6 0%,#FDF5F0 100%);border-radius:22px 22px 0 0;
   }
-  .modal-hdr-left h2{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:800;color:#0E0A06}
-  .modal-hdr-left .modal-meta{font-size:.83rem;color:#7A6058;margin-top:3px}
-  .modal-hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-  .btn-modal{
-    padding:8px 16px;border-radius:99px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:.2s;border:1.5px solid;display:flex;align-items:center;gap:6px;
+  .mhdr-left .m-name{
+    font-family:'Cormorant Garamond',serif;
+    font-size:2rem;font-weight:800;color:#0E0A06;margin-bottom:6px;
   }
-  .btn-print{border-color:rgba(30,100,180,.3);color:#1A4A8A;background:transparent}
-  .btn-print:hover{background:#1A4A8A;color:#fff;border-color:#1A4A8A}
-  .btn-modal-review{border-color:rgba(90,138,80,.3);color:#5A8A50;background:transparent}
-  .btn-modal-review:hover{background:#5A8A50;color:#fff;border-color:#5A8A50}
-  .btn-modal-review.reviewed{background:#5A8A50;color:#fff;border-color:#5A8A50}
-  .btn-close{
-    width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(180,150,130,.28);
-    background:transparent;font-size:1.1rem;cursor:pointer;transition:.18s;
-    display:flex;align-items:center;justify-content:center;color:#7A6058;flex-shrink:0;
+  .mhdr-left .m-meta{font-size:.84rem;color:#8A6A58;line-height:1.6}
+  .mhdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+  .mbtn{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:8px 15px;border-radius:99px;
+    font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;
+    cursor:pointer;transition:.2s;border:1.5px solid;
   }
-  .btn-close:hover{background:#FDF5F0;border-color:#C96848;color:#C96848}
+  .mbtn.print{border-color:rgba(30,100,180,.3);color:#1A4A8A;background:transparent}
+  .mbtn.print:hover{background:#1A4A8A;color:#fff;border-color:#1A4A8A}
+  .mbtn.review{border-color:rgba(80,140,70,.3);color:#3A7030;background:transparent}
+  .mbtn.review:hover,.mbtn.review.active{background:#3A7030;color:#fff;border-color:#3A7030}
+  .mbtn.close{
+    width:34px;height:34px;border-radius:50%;padding:0;justify-content:center;
+    border-color:rgba(180,150,130,.28);color:#8A6A58;background:transparent;font-size:1rem;
+  }
+  .mbtn.close:hover{background:#FDF5F0;border-color:#C96848;color:#C96848}
 
-  /* Modal body — ficha clínica */
+  /* Modal body */
   .modal-body{padding:28px 32px 36px}
-  .clinic-section{margin-bottom:30px}
-  .clinic-section:last-child{margin-bottom:0}
-  .clinic-section-title{
-    display:flex;align-items:center;gap:10px;
-    font-size:.7rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
-    color:#C96848;margin-bottom:16px;padding-bottom:10px;
-    border-bottom:2px solid rgba(201,104,72,.15);
+
+  .clinic-block{margin-bottom:28px}
+  .clinic-block:last-child{margin-bottom:0}
+  .clinic-title{
+    font-size:.68rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+    color:#C96848;padding-bottom:10px;margin-bottom:16px;
+    border-bottom:2px solid rgba(201,104,72,.14);
+    display:flex;align-items:center;gap:8px;
   }
   .clinic-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-  .clinic-field{padding:10px 0;border-bottom:1px solid rgba(180,150,130,.1)}
-  .clinic-field:nth-last-child(-n+2){border-bottom:none}
-  .clinic-field.full{grid-column:1/-1}
-  .clinic-field .cf-key{font-size:.73rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A89088;margin-bottom:3px}
-  .clinic-field .cf-val{font-size:.95rem;color:#1C1410;font-weight:500;line-height:1.5;word-break:break-word}
-  .clinic-field .cf-val.empty{color:#C4B8B0;font-style:italic;font-weight:400}
-  .clinic-field .cf-val.highlight{
-    color:#C96848;font-weight:700;
-    background:#FDF5F0;padding:3px 8px;border-radius:6px;display:inline-block;
+  .cf{padding:10px 0;border-bottom:1px solid rgba(180,150,130,.1)}
+  .cf:nth-last-child(-n+2){border-bottom:none}
+  .cf.full{grid-column:1/-1}
+  .cf-k{font-size:.71rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#B09888;margin-bottom:3px}
+  .cf-v{font-size:.93rem;color:#1C1410;font-weight:500;line-height:1.55;word-break:break-word}
+  .cf-v.empty{color:#C4B4AC;font-style:italic;font-weight:400}
+  .cf-v .chip-val{
+    display:inline-block;padding:2px 8px;border-radius:6px;
+    background:#FDF5F0;color:#C96848;font-weight:700;font-size:.88rem;
   }
 
-  /* Badge de revisión en modal */
-  .review-badge{
-    display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;
-    font-size:.76rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-    border:1.5px solid;
+  /* Review badge in modal */
+  .m-badge{
+    display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;
+    font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1.5px solid;
   }
-  .review-badge.new{border-color:rgba(201,104,72,.4);color:#A84830;background:#FDF5F0}
-  .review-badge.done{border-color:rgba(90,138,80,.4);color:#3A6A30;background:#F2F8F0}
+  .m-badge.new{border-color:rgba(201,104,72,.3);color:#A84830;background:#FDF5F0}
+  .m-badge.ok{border-color:rgba(80,140,70,.3);color:#3A7030;background:#F2F8EF}
 
-  /* ══════════════════════════════════════════════════════════════
-     PRINT STYLES  —  @media print
-  ══════════════════════════════════════════════════════════════ */
-  @media print {
-    @page{margin:18mm 16mm;size:A4 portrait}
-    body{background:#fff!important;color:#000!important}
+  /* Print footer */
+  .print-footer{display:none}
+
+  /* ══════════════════════════════════════════
+     PRINT STYLES
+  ══════════════════════════════════════════ */
+  @media print{
+    @page{margin:18mm 16mm;size:A4}
+    body{background:#fff!important}
     .topbar,.main,.modal-bg > *:not(.modal){display:none!important}
     .modal-bg{
-      position:static!important;background:none!important;backdrop-filter:none!important;
-      display:block!important;padding:0!important;overflow:visible!important;
+      position:static!important;background:none!important;
+      backdrop-filter:none!important;display:block!important;
+      padding:0!important;overflow:visible!important;
     }
-    .modal{
-      box-shadow:none!important;border-radius:0!important;max-width:100%!important;
-      margin:0!important;animation:none!important;
-    }
-    .modal-hdr{
-      background:#FAF7F2!important;border-bottom:2px solid #C96848!important;
-      page-break-after:avoid;border-radius:0!important;
-    }
-    .modal-hdr-right{display:none!important}
-    .btn-close{display:none!important}
+    .modal{box-shadow:none!important;border-radius:0!important;max-width:100%!important;margin:0!important;animation:none!important}
+    .modal-hdr{background:#FAF7F2!important;border-bottom:2px solid #C96848!important;border-radius:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .mhdr-right{display:none!important}
     .modal-body{padding:20px 0!important}
-    .clinic-section{page-break-inside:avoid}
-    .clinic-section-title{color:#C96848!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .clinic-field .cf-val.highlight{
-      background:#FDF5F0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;
-    }
+    .clinic-title{color:#C96848!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .clinic-block{page-break-inside:avoid}
     .print-footer{
       display:flex!important;align-items:center;justify-content:space-between;
-      border-top:1px solid #E0D0C8;margin-top:24px;padding-top:14px;
-      font-size:.78rem;color:#7A6058;
+      border-top:1px solid #E0D0C8;margin-top:20px;padding-top:12px;
+      font-size:.76rem;color:#8A6A58;font-family:'DM Sans',sans-serif;
     }
   }
-  .print-footer{display:none}/* hidden on screen, shown on print */
 
-  /* ══════════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════
      RESPONSIVE
-  ══════════════════════════════════════════════════════════════ */
-  @media(max-width:900px){
-    .stats-row{grid-template-columns:1fr 1fr}
-    .topbar{padding:0 18px}
-    .main{padding:24px 16px 80px}
-  }
-  @media(max-width:640px){
-    .stats-row{grid-template-columns:1fr 1fr}
+  ══════════════════════════════════════════ */
+  @media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:760px){
+    .topbar{padding:0 16px}
+    .main{padding:22px 14px 80px}
     .page-header{flex-direction:column;align-items:flex-start}
-    .filters-bar{flex-direction:column;align-items:stretch}
+    .page-header h1{font-size:2rem}
+    .search-bar{flex-direction:column;align-items:stretch}
     .filter-sep{display:none}
-    table thead{display:none}
-    tbody tr{display:block;padding:14px 16px;border-bottom:1px solid rgba(180,150,130,.12)}
-    td{display:block;padding:3px 0}
-    td::before{content:attr(data-label);font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#A89088;display:block}
-    td.td-status{display:inline-block;width:auto;padding:0;margin-bottom:4px}
-    td.td-actions{text-align:left;margin-top:8px}
+    .search-wrap{flex:none}
+    .cards-grid{grid-template-columns:1fr}
+    .stats{grid-template-columns:1fr 1fr}
     .clinic-grid{grid-template-columns:1fr}
-    .clinic-field.full{grid-column:1}
-    .modal{border-radius:14px}
-    .modal-hdr{padding:20px}
-    .modal-body{padding:18px}
-    .modal-hdr-right{flex-wrap:wrap}
+    .cf.full{grid-column:1}
+    .cf:last-child{border-bottom:none}
+    .modal-hdr{flex-direction:column;gap:14px}
+    .mhdr-right{width:100%;justify-content:flex-end}
+    .modal-body{padding:20px 18px}
   }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════ TOPBAR -->
+<!-- ════════════════════ TOPBAR ════════════════════ -->
 <nav class="topbar">
   <div class="topbar-left">
-    <img src="/logo.png" class="topbar-logo" alt="Logo Carla Guerrero"/>
-    <div class="topbar-brand">
-      <div class="title">Dashboard</div>
-      <div class="role">Nutricionista · Área privada</div>
+    <img src="/logo.png" class="t-logo" alt="Logo"/>
+    <div>
+      <div class="t-brand-title">Dashboard</div>
+      <div class="t-brand-sub">Área privada · Nutricionista</div>
     </div>
   </div>
   <div class="topbar-right">
-    <button class="btn-sm" onclick="loadData()">↺ Actualizar</button>
-    <a href="/admin/logout" class="btn-sm danger">Cerrar sesión</a>
+    <button class="t-btn" onclick="loadData()">↺ Actualizar</button>
+    <a href="/admin/logout" class="t-btn red">Salir</a>
   </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════ MAIN -->
+<!-- ════════════════════ MAIN ════════════════════ -->
 <main class="main">
 
-  <!-- PAGE HEADER -->
+  <!-- HEADER -->
   <div class="page-header">
-    <div class="page-header-text">
-      <h1>Fichas Nutricionales</h1>
-      <p>Gestiona y revisa las fichas recibidas de tus pacientes</p>
+    <div>
+      <h1>Fichas de Pacientes</h1>
+      <p>Gestiona y revisa las fichas nutricionales recibidas</p>
     </div>
-    <div class="export-btns">
+    <div class="export-row">
       <button class="btn-export xlsx" onclick="exportXLSX()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Exportar Excel
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Excel
       </button>
       <button class="btn-export csv" onclick="exportCSV()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Exportar CSV
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
       </button>
     </div>
   </div>
 
   <!-- STATS -->
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-icon">📋</div>
-      <div><div class="stat-num" id="sTotal">—</div><div class="stat-lbl">Total fichas</div></div>
-    </div>
-    <div class="stat-card unread">
-      <div class="stat-icon">🔴</div>
-      <div><div class="stat-num" id="sSinRevisar">—</div><div class="stat-lbl">Sin revisar</div></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">🌅</div>
-      <div><div class="stat-num" id="sHoy">—</div><div class="stat-lbl">Hoy</div></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">📅</div>
-      <div><div class="stat-num" id="sSemana">—</div><div class="stat-lbl">Esta semana</div></div>
-    </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-ico">📋</div><div><div class="stat-num" id="sTotal">—</div><div class="stat-lbl">Total fichas</div></div></div>
+    <div class="stat accent"><div class="stat-ico">🔴</div><div><div class="stat-num" id="sNew">—</div><div class="stat-lbl">Sin revisar</div></div></div>
+    <div class="stat"><div class="stat-ico">🌅</div><div><div class="stat-num" id="sHoy">—</div><div class="stat-lbl">Hoy</div></div></div>
+    <div class="stat"><div class="stat-ico">📅</div><div><div class="stat-num" id="sSem">—</div><div class="stat-lbl">Esta semana</div></div></div>
   </div>
 
-  <!-- FILTERS -->
-  <div class="filters-bar">
-    <div class="filter-group" style="flex:2;min-width:240px">
-      <label>🔍 Buscar</label>
-      <input type="text" class="filter-input" id="searchInput"
-        placeholder="Nombre, apellido, email o teléfono..." oninput="applyFilters()"/>
+  <!-- SEARCH & FILTERS -->
+  <div class="search-bar">
+    <div class="search-wrap" style="flex:2;min-width:220px">
+      <span class="search-ico">🔍</span>
+      <input class="search-input" id="searchInput" type="text"
+        placeholder="Buscar por nombre, apellido, email o teléfono…"
+        oninput="applyFilters()"/>
     </div>
-    <div class="filter-sep"></div>
-    <div class="filter-group">
-      <label>Desde</label>
-      <input type="date" class="filter-input" id="dateFrom" oninput="applyFilters()" style="min-width:140px"/>
-    </div>
-    <div class="filter-group">
-      <label>Hasta</label>
-      <input type="date" class="filter-input" id="dateTo" oninput="applyFilters()" style="min-width:140px"/>
-    </div>
-    <div class="filter-group" style="flex:0;min-width:auto">
-      <label>Estado</label>
-      <select class="filter-input" id="filterReviewed" onchange="applyFilters()" style="min-width:140px">
-        <option value="">Todas</option>
-        <option value="false">Sin revisar</option>
-        <option value="true">Revisadas</option>
-      </select>
-    </div>
-    <button class="btn-filter-clear" onclick="clearFilters()">✕ Limpiar</button>
+    <span class="filter-sep"></span>
+    <input type="date" class="filter-date" id="dateFrom" title="Desde" oninput="applyFilters()"/>
+    <input type="date" class="filter-date" id="dateTo" title="Hasta" oninput="applyFilters()"/>
+    <select class="filter-sel" id="filterRev" onchange="applyFilters()">
+      <option value="">Todas</option>
+      <option value="new">Sin revisar</option>
+      <option value="done">Revisadas</option>
+    </select>
+    <button class="btn-clear" onclick="clearFilters()">✕ Limpiar</button>
   </div>
 
-  <!-- TABLE CONTROLS -->
-  <div class="table-controls">
+  <!-- RESULT BAR -->
+  <div class="result-bar">
     <span class="result-count" id="resultCount"></span>
-    <span id="activeFilters"></span>
+    <div class="filter-pills" id="filterPills"></div>
   </div>
 
-  <!-- TABLE -->
-  <div class="table-wrap" id="tableWrap">
+  <!-- CARDS -->
+  <div id="cardsArea">
     <div class="state-box">
-      <span class="icon"><span class="spin-icon">⏳</span></span>
-      <h3>Cargando fichas...</h3>
+      <span class="ico"><span class="spin">⏳</span></span>
+      <h3>Cargando fichas…</h3>
+      <p>Un momento por favor</p>
     </div>
   </div>
 
 </main>
 
-<!-- ═══════════════════════════════════════════ MODAL FICHA CLÍNICA -->
+<!-- ════════════════════ MODAL FICHA CLÍNICA ════════════════════ -->
 <div class="modal-bg" id="modalBg">
-  <div class="modal" id="modal" onclick="event.stopPropagation()">
+  <div class="modal" onclick="event.stopPropagation()">
 
     <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <h2 id="mName">—</h2>
-        <div class="modal-meta" id="mMeta">—</div>
+      <div class="mhdr-left">
+        <div class="m-name" id="mName">—</div>
+        <div class="m-meta" id="mMeta">—</div>
       </div>
-      <div class="modal-hdr-right">
-        <button class="btn-modal btn-modal-review" id="btnModalReview" onclick="toggleReviewModal()">
-          ✓ Marcar revisada
-        </button>
-        <button class="btn-modal btn-print" onclick="printFicha()">
-          🖨 Imprimir / PDF
-        </button>
-        <button class="btn-close" onclick="closeModal()">✕</button>
+      <div class="mhdr-right">
+        <button class="mbtn review" id="btnRev" onclick="toggleReview()">✓ Marcar revisada</button>
+        <button class="mbtn print" onclick="window.print()">🖨 PDF</button>
+        <button class="mbtn close" onclick="closeModal()">✕</button>
       </div>
     </div>
 
     <div class="modal-body" id="mBody">
-      <div class="state-box"><span class="spin-icon">⏳</span></div>
+      <div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>
     </div>
 
-    <!-- Print footer (hidden on screen) -->
-    <div class="print-footer" id="printFooter">
+    <div class="print-footer">
       <span>Carla Guerrero · Nutricionista</span>
       <span id="printDate"></span>
     </div>
-
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ SCRIPTS -->
+<!-- ════════════════════ JS ════════════════════ -->
 <script>
-/* ══════════════════════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════════════════════ */
-let allSubmissions = [];
-let filtered       = [];
-let currentId      = null;
+/* ─── STATE ─── */
+let all      = [];   // all submissions from API
+let filtered = [];   // current filtered subset
+let curId    = null; // open modal id
 
-/* ══════════════════════════════════════════════════════════════
-   LOAD DATA
-══════════════════════════════════════════════════════════════ */
+/* ─── BOOT ─── */
+loadData();
+
+/* ─── LOAD ─── */
 async function loadData() {
-  setTableLoading();
+  showLoading();
   try {
-    const [sRes, fRes] = await Promise.all([
-      fetch('/api/stats'),
-      fetch('/api/submissions')
-    ]);
+    const [sr, fr] = await Promise.all([fetch('/api/stats'), fetch('/api/submissions')]);
 
-    if (sRes.ok) {
-      const { stats } = await sRes.json();
-      el('sTotal').textContent      = stats.total       || '0';
-      el('sSinRevisar').textContent = stats.sin_revisar || '0';
-      el('sHoy').textContent        = stats.hoy         || '0';
-      el('sSemana').textContent     = stats.semana      || '0';
+    if (sr.ok) {
+      const { stats: s } = await sr.json();
+      $('sTotal').textContent = s.total       || '0';
+      $('sNew').textContent   = s.sin_revisar || '0';
+      $('sHoy').textContent   = s.hoy         || '0';
+      $('sSem').textContent   = s.semana      || '0';
     }
 
-    if (!fRes.ok) throw new Error('No autorizado');
-    const { submissions } = await fRes.json();
-    allSubmissions = submissions;
+    if (!fr.ok) throw new Error('Sesión expirada. Por favor recarga la página.');
+    const { submissions } = await fr.json();
+    all = submissions;
     applyFilters();
 
   } catch (e) {
-    el('tableWrap').innerHTML = `
+    $('cardsArea').innerHTML = `
       <div class="state-box">
-        <span class="icon">⚠️</span>
+        <span class="ico">⚠️</span>
         <h3>Error al cargar</h3>
         <p>${esc(e.message)}</p>
       </div>`;
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   FILTERS
-══════════════════════════════════════════════════════════════ */
+/* ─── FILTERS ─── */
 function applyFilters() {
-  const q        = el('searchInput').value.toLowerCase().trim();
-  const from     = el('dateFrom').value;   // YYYY-MM-DD
-  const to       = el('dateTo').value;
-  const reviewed = el('filterReviewed').value;
+  const q   = $('searchInput').value.toLowerCase().trim();
+  const df  = $('dateFrom').value;
+  const dt  = $('dateTo').value;
+  const rev = $('filterRev').value;
 
-  filtered = allSubmissions.filter(s => {
-    // text search
+  filtered = all.filter(s => {
     if (q) {
-      const hay = [s.nombre, s.apellido, s.email, s.telefono]
-        .filter(Boolean).join(' ').toLowerCase();
+      const hay = [s.nombre,s.apellido,s.email,s.telefono].filter(Boolean).join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
-    // date range
-    if (from || to) {
-      const iso = s.fecha_iso || '';          // YYYY-MM-DD
-      if (from && iso < from) return false;
-      if (to   && iso > to)   return false;
+    if (df || dt) {
+      const iso = s.fecha_iso || '';
+      if (df && iso < df) return false;
+      if (dt && iso > dt) return false;
     }
-    // reviewed status
-    if (reviewed !== '') {
-      const isRev = s.reviewed === true || s.reviewed === 't' || s.reviewed === 'true';
-      if (reviewed === 'true'  && !isRev) return false;
-      if (reviewed === 'false' &&  isRev) return false;
+    if (rev) {
+      const isRev = isReviewed(s);
+      if (rev === 'new'  &&  isRev) return false;
+      if (rev === 'done' && !isRev) return false;
     }
     return true;
   });
 
-  updateFilterTags(q, from, to, reviewed);
-  renderTable(filtered);
+  // Pills
+  const pills = [];
+  if (q)              pills.push(`"${q}"`);
+  if (df)             pills.push(`Desde ${df}`);
+  if (dt)             pills.push(`Hasta ${dt}`);
+  if (rev === 'new')  pills.push('Sin revisar');
+  if (rev === 'done') pills.push('Revisadas');
+  $('filterPills').innerHTML = pills.map(p=>`<span class="pill">⚡ ${esc(p)}</span>`).join('');
+
+  $('resultCount').textContent = filtered.length
+    ? `${filtered.length} ficha${filtered.length!==1?'s':''}`
+    : '';
+
+  renderCards(filtered);
 }
 
 function clearFilters() {
-  el('searchInput').value = '';
-  el('dateFrom').value    = '';
-  el('dateTo').value      = '';
-  el('filterReviewed').value = '';
+  $('searchInput').value = '';
+  $('dateFrom').value    = '';
+  $('dateTo').value      = '';
+  $('filterRev').value   = '';
   applyFilters();
 }
 
-function updateFilterTags(q, from, to, reviewed) {
-  const tags = [];
-  if (q)        tags.push(`"${q}"`);
-  if (from)     tags.push(`Desde ${from}`);
-  if (to)       tags.push(`Hasta ${to}`);
-  if (reviewed === 'false') tags.push('Sin revisar');
-  if (reviewed === 'true')  tags.push('Revisadas');
-
-  el('activeFilters').innerHTML = tags
-    .map(t => `<span class="filter-tag">⚡ ${esc(t)}</span>`)
-    .join(' ');
+function isReviewed(s) {
+  return s.reviewed === true || s.reviewed === 't' || s.reviewed === 'true';
 }
 
-/* ══════════════════════════════════════════════════════════════
-   RENDER TABLE
-══════════════════════════════════════════════════════════════ */
-function renderTable(rows) {
-  const cnt = el('resultCount');
-  cnt.textContent = rows.length > 0
-    ? `${rows.length} ficha${rows.length !== 1 ? 's' : ''}`
-    : '';
-
-  if (rows.length === 0) {
-    el('tableWrap').innerHTML = `
+/* ─── RENDER CARDS ─── */
+function renderCards(rows) {
+  if (!rows.length) {
+    $('cardsArea').innerHTML = `
       <div class="state-box">
-        <span class="icon">📭</span>
+        <span class="ico">📭</span>
         <h3>Sin resultados</h3>
-        <p>No hay fichas que coincidan con los filtros actuales.</p>
+        <p>No hay fichas que coincidan con los filtros aplicados.</p>
       </div>`;
     return;
   }
 
-  const rowsHTML = rows.map(s => {
-    const isNew = !(s.reviewed === true || s.reviewed === 't' || s.reviewed === 'true');
-    return `
-    <tr class="${isNew ? 'unread-row' : ''}" onclick="openModal(${s.id})">
-      <td class="td-status" data-label="">
-        <span class="${isNew ? 'dot-new' : 'dot-ok'}" title="${isNew ? 'Sin revisar' : 'Revisada'}"></span>
-      </td>
-      <td class="td-name" data-label="Nombre">${esc((s.nombre||'')+' '+(s.apellido||'')).trim() || '—'}</td>
-      <td class="td-email" data-label="Email">${esc(s.email||'—')}</td>
-      <td class="td-phone" data-label="Teléfono">${esc(s.telefono||'—')}</td>
-      <td class="td-date" data-label="Fecha">${esc(s.fecha||'—')}</td>
-      <td class="td-actions" data-label="">
-        <button class="btn-row btn-view" onclick="event.stopPropagation();openModal(${s.id})">Ver ficha</button>
-        <button class="btn-row btn-review-row ${isNew ? '' : 'done'}" title="${isNew ? 'Marcar revisada' : 'Marcar sin revisar'}"
-          onclick="event.stopPropagation();quickReview(${s.id},${isNew})">${isNew ? '✓' : '↺'}</button>
-        <button class="btn-row btn-del-row" title="Eliminar ficha"
-          onclick="event.stopPropagation();deleteSub(${s.id})">🗑</button>
-      </td>
-    </tr>`;
-  }).join('');
-
-  el('tableWrap').innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Teléfono</th>
-          <th>Fecha recibida</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>${rowsHTML}</tbody>
-    </table>`;
+  $('cardsArea').innerHTML = `<div class="cards-grid">${rows.map(cardHTML).join('')}</div>`;
 }
 
-function setTableLoading() {
-  el('tableWrap').innerHTML = `
+function cardHTML(s) {
+  const rev    = isReviewed(s);
+  const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || '(Sin nombre)';
+  return `
+  <div class="patient-card ${rev?'':'is-new'}" id="card-${s.id}">
+    <div class="card-top">
+      <div class="card-badges">
+        <span class="badge ${rev?'reviewed':'new'}">${rev?'✓ Revisada':'● Nueva'}</span>
+      </div>
+      <span class="card-date">${esc(s.fecha||'—')}</span>
+    </div>
+
+    <div class="card-name">${esc(nombre)}</div>
+
+    <div class="card-contact">
+      ${s.email    ? `<div class="card-contact-item"><span class="contact-ico">✉</span>${esc(s.email)}</div>` : ''}
+      ${s.telefono ? `<div class="card-contact-item"><span class="contact-ico">📞</span>${esc(s.telefono)}</div>` : ''}
+    </div>
+
+    <div class="card-div"></div>
+
+    <div class="card-actions">
+      <button class="btn-detail" onclick="openModal(${s.id})">
+        Ver ficha completa
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+      <button class="btn-review-card ${rev?'done':''}" title="${rev?'Quitar revisada':'Marcar revisada'}"
+        onclick="quickReview(${s.id},${!rev})">
+        ${rev?'↺':'✓'}
+      </button>
+      <button class="btn-del-card" title="Eliminar ficha" onclick="deleteSub(${s.id})">🗑</button>
+    </div>
+  </div>`;
+}
+
+function showLoading() {
+  $('cardsArea').innerHTML = `
     <div class="state-box">
-      <span class="icon"><span class="spin-icon">⏳</span></span>
-      <h3>Cargando...</h3>
+      <span class="ico"><span class="spin">⏳</span></span>
+      <h3>Cargando…</h3>
     </div>`;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   QUICK REVIEW (from table row)
-══════════════════════════════════════════════════════════════ */
-async function quickReview(id, markAsReviewed) {
-  await patchReview(id, markAsReviewed);
-  const s = allSubmissions.find(x => x.id === id);
-  if (s) s.reviewed = markAsReviewed;
-  // Update stat badge
-  const cur = parseInt(el('sSinRevisar').textContent) || 0;
-  el('sSinRevisar').textContent = markAsReviewed ? Math.max(0, cur - 1) : cur + 1;
+/* ─── QUICK REVIEW (from card) ─── */
+async function quickReview(id, markAs) {
+  await patchReview(id, markAs);
+  const s = all.find(x => x.id === id);
+  if (s) { s.reviewed = markAs; }
+  const cur = parseInt($('sNew').textContent) || 0;
+  $('sNew').textContent = markAs ? Math.max(0, cur - 1) : cur + 1;
   applyFilters();
 }
 
-/* ══════════════════════════════════════════════════════════════
-   MODAL
-══════════════════════════════════════════════════════════════ */
+/* ─── MODAL ─── */
 async function openModal(id) {
-  currentId = id;
-  el('modalBg').classList.add('open');
+  curId = id;
+  $('modalBg').classList.add('open');
   document.body.style.overflow = 'hidden';
-  el('mName').textContent = 'Cargando...';
-  el('mMeta').textContent = '';
-  el('mBody').innerHTML = '<div class="state-box"><span class="spin-icon">⏳</span></div>';
+  $('mName').textContent = 'Cargando…';
+  $('mMeta').innerHTML   = '';
+  $('mBody').innerHTML   = '<div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>';
 
-  const res  = await fetch(`/api/submissions/${id}`);
-  const json = await res.json();
+  const json = await fetch(`/api/submissions/${id}`).then(r => r.json());
   if (!json.success) {
-    el('mBody').innerHTML = '<div class="state-box"><span class="icon">⚠️</span><h3>Error al cargar</h3></div>';
+    $('mBody').innerHTML = '<div class="state-box"><span class="ico">⚠️</span><h3>No se pudo cargar</h3></div>';
     return;
   }
 
   const s   = json.submission;
   const d   = s.data || {};
-  const rev = s.reviewed === true || s.reviewed === 't' || s.reviewed === 'true';
+  const rev = isReviewed(s);
 
-  el('mName').textContent = `${s.nombre||''} ${s.apellido||''}`.trim() || '(Sin nombre)';
-  el('mMeta').innerHTML   = `
-    <span class="review-badge ${rev ? 'done' : 'new'}">${rev ? '✓ Revisada' : '● Nueva'}</span>
-    &nbsp; ${esc(s.email||'')} · ${esc(s.telefono||'')} · Recibida el ${esc(s.fecha||'')}`;
+  $('mName').textContent = [s.nombre, s.apellido].filter(Boolean).join(' ') || '(Sin nombre)';
+  $('mMeta').innerHTML = `
+    <span class="m-badge ${rev?'ok':'new'}">${rev?'✓ Revisada':'● Nueva'}</span>
+    &nbsp;&nbsp;${esc(s.email||'')}${s.telefono ? ' · '+esc(s.telefono) : ''}
+    <br/>Recibida el ${esc(s.fecha||'')}`;
 
-  // Update review button
-  const rb = el('btnModalReview');
-  rb.className = `btn-modal btn-modal-review${rev ? ' reviewed' : ''}`;
-  rb.textContent = rev ? '↺ Marcar sin revisar' : '✓ Marcar revisada';
+  const rb = $('btnRev');
+  rb.textContent = rev ? '↺ Quitar revisada' : '✓ Marcar revisada';
+  rb.className   = `mbtn review${rev?' active':''}`;
 
-  // Print footer date
-  el('printFooter').querySelector('#printDate').textContent =
-    'Impreso el ' + new Date().toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
+  $('printDate').textContent = 'Impreso el ' +
+    new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
 
-  el('mBody').innerHTML = buildClinicHTML(d, s);
+  $('mBody').innerHTML = clinicHTML(d);
 }
 
 function closeModal() {
-  el('modalBg').classList.remove('open');
+  $('modalBg').classList.remove('open');
   document.body.style.overflow = '';
-  currentId = null;
+  curId = null;
 }
 
-/* Toggle review from modal */
-async function toggleReviewModal() {
-  if (!currentId) return;
-  const s   = allSubmissions.find(x => x.id === currentId);
-  const cur = s ? (s.reviewed === true || s.reviewed === 't' || s.reviewed === 'true') : false;
+async function toggleReview() {
+  if (!curId) return;
+  const s   = all.find(x => x.id === curId);
+  const cur = isReviewed(s);
   const now = !cur;
-  await patchReview(currentId, now);
+  await patchReview(curId, now);
   if (s) s.reviewed = now;
-  // Re-open with updated data
-  await openModal(currentId);
-  // Refresh stat
-  const stat = parseInt(el('sSinRevisar').textContent) || 0;
-  el('sSinRevisar').textContent = now ? Math.max(0, stat - 1) : stat + 1;
+  const stat = parseInt($('sNew').textContent) || 0;
+  $('sNew').textContent = now ? Math.max(0, stat - 1) : stat + 1;
+  await openModal(curId);
   applyFilters();
 }
 
-async function patchReview(id, reviewed) {
+async function patchReview(id, val) {
   await fetch(`/api/submissions/${id}/review`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reviewed })
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({reviewed: val})
   });
 }
 
-/* ══════════════════════════════════════════════════════════════
-   DELETE
-══════════════════════════════════════════════════════════════ */
+/* ─── DELETE ─── */
 async function deleteSub(id) {
-  if (!confirm('¿Eliminar esta ficha permanentemente? Esta acción no se puede deshacer.')) return;
-  const res = await fetch(`/api/submissions/${id}`, { method: 'DELETE' });
-  if (res.ok) {
-    allSubmissions = allSubmissions.filter(s => s.id !== id);
-    const cur = parseInt(el('sTotal').textContent) || 1;
-    el('sTotal').textContent = cur - 1;
+  if (!confirm('¿Eliminar esta ficha permanentemente? No se puede deshacer.')) return;
+  const r = await fetch(`/api/submissions/${id}`, {method:'DELETE'});
+  if (r.ok) {
+    all = all.filter(s => s.id !== id);
+    const cur = parseInt($('sTotal').textContent) || 1;
+    $('sTotal').textContent = cur - 1;
     applyFilters();
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   PRINT
-══════════════════════════════════════════════════════════════ */
-function printFicha() {
-  window.print();
-}
-
-/* ══════════════════════════════════════════════════════════════
-   EXPORT  —  CSV
-══════════════════════════════════════════════════════════════ */
-function exportCSV() {
-  if (!filtered.length) { alert('No hay fichas visibles para exportar.'); return; }
-
-  const headers = ['ID','Nombre','Apellido','Email','Teléfono','Fecha','Revisada'];
-  const rows = filtered.map(s => [
-    s.id,
-    s.nombre||'',
-    s.apellido||'',
-    s.email||'',
-    s.telefono||'',
-    s.fecha||'',
-    (s.reviewed===true||s.reviewed==='t'||s.reviewed==='true') ? 'Sí' : 'No'
-  ]);
-
-  const csv = [headers, ...rows]
-    .map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(','))
-    .join('\n');
-
-  const bom  = '\uFEFF'; // UTF-8 BOM for Excel compatibility
-  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
-  downloadBlob(blob, `fichas-carla-${dateStr()}.csv`);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   EXPORT  —  XLSX  (SheetJS)
-══════════════════════════════════════════════════════════════ */
-function exportXLSX() {
-  if (!filtered.length) { alert('No hay fichas visibles para exportar.'); return; }
-  if (typeof XLSX === 'undefined') { alert('La librería de Excel no está disponible. Verifica tu conexión.'); return; }
-
-  const headers = ['ID','Nombre','Apellido','Email','Teléfono','Fecha recibida','Revisada'];
-  const data = [
-    headers,
-    ...filtered.map(s => [
-      s.id,
-      s.nombre||'',
-      s.apellido||'',
-      s.email||'',
-      s.telefono||'',
-      s.fecha||'',
-      (s.reviewed===true||s.reviewed==='t'||s.reviewed==='true') ? 'Sí' : 'No'
-    ])
-  ];
-
-  const ws = XLSX.utils.aoa_to_sheet(data);
-
-  // Column widths
-  ws['!cols'] = [
-    {wch:6},{wch:18},{wch:18},{wch:32},{wch:16},{wch:20},{wch:10}
-  ];
-
-  // Style header row (bold)
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for (let c = range.s.c; c <= range.e.c; c++) {
-    const addr = XLSX.utils.encode_cell({ r: 0, c });
-    if (!ws[addr]) continue;
-    ws[addr].s = { font: { bold: true }, fill: { fgColor: { rgb: 'FDF5F0' } } };
-  }
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Fichas');
-  XLSX.writeFile(wb, `fichas-carla-${dateStr()}.xlsx`);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   BUILD CLINICAL RECORD HTML
-══════════════════════════════════════════════════════════════ */
-function buildClinicHTML(d, s) {
-  const f = (key, val, full) => {
-    const empty = !val || val === 'no';
-    return `
-      <div class="clinic-field${full?' full':''}">
-        <div class="cf-key">${key}</div>
-        <div class="cf-val${empty?' empty':''}">${esc(val||'No informado')}</div>
-      </div>`;
-  };
-  const fh = (key, val, full) => `
-    <div class="clinic-field${full?' full':''}">
-      <div class="cf-key">${key}</div>
-      <div class="cf-val${val?'':' empty'}"><span class="${val?'highlight':''}">${esc(val||'No informado')}</span></div>
+/* ─── BUILD CLINIC HTML ─── */
+function clinicHTML(d) {
+  const f = (k, v, full) => {
+    const empty = !v;
+    return `<div class="cf${full?' full':''}">
+      <div class="cf-k">${k}</div>
+      <div class="cf-v${empty?' empty':''}">${esc(v||'No informado')}</div>
     </div>`;
+  };
+  const fh = (k, v, full) => `<div class="cf${full?' full':''}">
+    <div class="cf-k">${k}</div>
+    <div class="cf-v${v?'':' empty'}">${v ? `<span class="chip-val">${esc(v)}</span>` : 'No informado'}</div>
+  </div>`;
 
-  // Build hábitos string
   const habitos = [
     d.alcohol==='si' ? `🍷 Alcohol (${d.alcohol_frec||''} ${d.alcohol_cant||''})`.trim() : '',
-    d.tabaco ==='si' ? `🚬 Tabaco (${d.tabaco_frec||''} ${d.tabaco_cant||''})`.trim() : '',
+    d.tabaco ==='si' ? `🚬 Tabaco (${d.tabaco_frec||''} ${d.tabaco_cant||''})`.trim()  : '',
     d.drogas ==='si' ? '⚠️ Otras sustancias' : ''
-  ].filter(Boolean).join('  ·  ') || 'No reporta';
+  ].filter(Boolean).join(' · ') || 'No reporta';
 
-  // Medicamentos
-  let medBlock = '<div class="clinic-field full"><div class="cf-key">Medicamentos</div><div class="cf-val empty">No consume medicamentos</div></div>';
-  if (d.tieneMed === 'si') {
-    medBlock = `
-      ${f('Medicamento', d.medNombre)} ${f('Frecuencia', d.medFrecuencia)}
-      ${f('Dosis', d.medDosis)} ${f('Motivo', d.medMotivo)}`;
-  }
+  const medHTML = d.tieneMed === 'si'
+    ? f('Medicamento', d.medNombre) + f('Frecuencia', d.medFrecuencia) +
+      f('Dosis', d.medDosis)       + f('Motivo', d.medMotivo)
+    : `<div class="cf full"><div class="cf-k">Medicamentos</div><div class="cf-v empty">No consume medicamentos</div></div>`;
 
-  // Suplementos
-  let supBlock = '';
-  if (d.tieneSup === 'si') {
-    supBlock = `
-      ${f('Suplemento', d.supNombre)} ${f('Frecuencia', d.supFrecuencia)} ${f('Marca', d.supMarca)}`;
-  }
-  if (d.tieneSupDep === 'si') {
-    supBlock += `
-      ${f('Sup. deportivo', d.supDepNombre)} ${f('Frec. dep.', d.supDepFrecuencia)} ${f('Marca dep.', d.supDepMarca)}`;
-  }
-  if (!supBlock) supBlock = '<div class="clinic-field full"><div class="cf-key">Suplementos</div><div class="cf-val empty">No consume suplementos</div></div>';
+  const supHTML = d.tieneSup === 'si'
+    ? f('Suplemento', d.supNombre) + f('Frecuencia', d.supFrecuencia) + f('Marca', d.supMarca)
+    : `<div class="cf full"><div class="cf-k">Suplementos</div><div class="cf-v empty">No consume suplementos</div></div>`;
+
+  const supDepHTML = d.tieneSupDep === 'si'
+    ? f('Sup. deportivo', d.supDepNombre) + f('Frec.', d.supDepFrecuencia) + f('Marca', d.supDepMarca)
+    : '';
 
   return `
-    <!-- SECCIÓN 1 -->
-    <div class="clinic-section">
-      <div class="clinic-section-title">👤 Datos de Identificación</div>
+    <div class="clinic-block">
+      <div class="clinic-title">👤 Datos personales</div>
       <div class="clinic-grid">
-        ${f('Nombre', d.nombre)} ${f('Apellido', d.apellido)}
+        ${f('Nombre', d.nombre)}         ${f('Apellido', d.apellido)}
         ${f('Edad', d.edad ? d.edad+' años' : '')} ${f('Fecha de nacimiento', d.fechaNacimiento)}
-        ${f('Email', d.email)} ${f('Teléfono', d.telefono ? '+569 '+d.telefono : '')}
+        ${f('Email', d.email)}           ${f('Teléfono', d.telefono ? '+569 '+d.telefono : '')}
         ${f('Ciudad / Comuna', d.comuna)} ${f('Estado civil', d.estadoCivil)}
-        ${f('Nacionalidad', d.nacionalidad)} ${f('Jornada laboral', d.jornada)}
-        ${f('Transporte habitual', d.transporte)} ${f('¿Con quién vive?', d.convivencia, true)}
+        ${f('Nacionalidad', d.nacionalidad)} ${f('Jornada', d.jornada)}
+        ${f('Transporte', d.transporte)} ${f('Convivencia', d.convivencia)}
         ${f('Ocupación', d.ocupacion, true)}
       </div>
     </div>
 
-    <!-- SECCIÓN 2 -->
-    <div class="clinic-section">
-      <div class="clinic-section-title">🎯 Historia Clínica y Objetivos</div>
+    <div class="clinic-block">
+      <div class="clinic-title">🎯 Motivo de consulta y objetivos</div>
       <div class="clinic-grid">
-        ${fh('Motivación para consultar', d.motivacion, true)}
-        ${fh('Objetivo principal', d.objetivo ? d.objetivo.replace(/,/g, ' · ') : '', true)}
+        ${fh('Motivación', d.motivacion, true)}
+        ${fh('Objetivo principal', d.objetivo ? d.objetivo.replace(/,/g,' · ') : '', true)}
         ${f('Cirugía previa', d.tieneCirugia==='si' ? 'Sí — '+(d.cirugia||'No especificada') : 'No')}
         ${f('Dieta previa', d.dietaPrevia)}
-        ${f('Enfermedad diagnosticada', d.tieneEnfermedad==='si' ? 'Sí — '+(d.cualEnfermedad||'No especificada') : 'No', true)}
+        ${f('Enfermedad diagnosticada', d.tieneEnfermedad==='si' ? 'Sí — '+(d.cualEnfermedad||'') : 'No', true)}
       </div>
     </div>
 
-    <!-- SECCIÓN 3 -->
-    <div class="clinic-section">
-      <div class="clinic-section-title">💊 Medicamentos y Suplementos</div>
+    <div class="clinic-block">
+      <div class="clinic-title">💊 Medicamentos y suplementos</div>
       <div class="clinic-grid">
-        ${medBlock}
-        ${supBlock}
+        ${medHTML}
+        ${supHTML}
+        ${supDepHTML}
       </div>
     </div>
 
-    <!-- SECCIÓN 4 -->
-    <div class="clinic-section">
-      <div class="clinic-section-title">🍽 Alimentación y Hábitos Diarios</div>
+    <div class="clinic-block">
+      <div class="clinic-title">🍽 Alimentación y hábitos</div>
       <div class="clinic-grid">
         ${f('Tipo de alimentación', d.tipoAlimentacion ? d.tipoAlimentacion.replace(/,/g,' · ') : '', true)}
         ${f('N° comidas al día', d.nComidas)} ${f('Agua al día', d.agua)}
-        ${f('Horario desayuno', d.desayunoHora)} ${f('Descripción desayuno', d.desayunoDesc, true)}
-        ${f('Horario almuerzo', d.almuerzoHora)} ${f('Descripción almuerzo', d.almuerzoDesc, true)}
-        ${f('Horario once/merienda', d.onceHora)} ${f('Descripción once', d.onceDesc, true)}
-        ${f('Horario cena', d.cenaHora)} ${f('Descripción cena', d.cenaDesc, true)}
-        ${f('Snacks / colaciones', d.snacks, true)}
+        ${f('Desayuno', d.desayunoHora ? d.desayunoHora+' — '+( d.desayunoDesc||'') : '', true)}
+        ${f('Almuerzo', d.almuerzoHora ? d.almuerzoHora+' — '+(d.almuerzoDesc||'') : '', true)}
+        ${f('Once / Merienda', d.onceHora ? d.onceHora+' — '+(d.onceDesc||'') : '', true)}
+        ${f('Cena', d.cenaHora ? d.cenaHora+' — '+(d.cenaDesc||'') : '', true)}
+        ${f('Snacks', d.snacks, true)}
         ${f('Alergias / intolerancias', d.alergias, true)}
-        ${f('Color de orina', d.colorOrina)} ${f('Calidad del sueño', d.sueno)}
-        ${f('Horas de sueño', d.horasSueno)} ${f('Nivel de estrés', d.estres)}
-        ${f('Hábitos de alcohol / tabaco', habitos, true)}
+        ${f('Color de orina', d.colorOrina)} ${f('Sueño', d.sueno ? d.sueno+' ('+( d.horasSueno||'')+'h)' : '')}
+        ${f('Nivel de estrés', d.estres)} ${f('Hábitos', habitos, true)}
       </div>
     </div>
 
-    <!-- SECCIÓN 5 -->
-    <div class="clinic-section">
-      <div class="clinic-section-title">🏃 Actividad Física</div>
+    <div class="clinic-block">
+      <div class="clinic-title">🏃 Actividad física</div>
       <div class="clinic-grid">
-        ${f('Realiza actividad física', d.tieneActividad==='si' ? 'Sí' : 'No')}
-        ${f('Tipo de actividad', d.actividadTipo)}
-        ${f('Frecuencia semanal', d.actividadFrecuencia)}
-        ${f('Duración por sesión', d.actividadDuracion)}
-        ${f('Horario preferido', d.actividadHorario)}
+        ${f('Realiza actividad', d.tieneActividad==='si' ? 'Sí' : 'No')}
+        ${f('Tipo', d.actividadTipo)} ${f('Frecuencia', d.actividadFrecuencia)}
+        ${f('Duración', d.actividadDuracion)} ${f('Horario', d.actividadHorario)}
         ${f('Objetivo físico', d.objetivoFisico, true)}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   UTILITIES
-══════════════════════════════════════════════════════════════ */
-function el(id) { return document.getElementById(id); }
-function esc(str) {
-  return String(str||'')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function dateStr() {
-  return new Date().toISOString().split('T')[0];
-}
-function downloadBlob(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const a   = Object.assign(document.createElement('a'), { href: url, download: name });
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+/* ─── EXPORT CSV ─── */
+function exportCSV() {
+  if (!filtered.length) { alert('No hay fichas visibles para exportar.'); return; }
+  const h = ['ID','Nombre','Apellido','Email','Teléfono','Fecha','Revisada'];
+  const r = filtered.map(s => [s.id, s.nombre||'', s.apellido||'', s.email||'', s.telefono||'', s.fecha||'', isReviewed(s)?'Sí':'No']);
+  const csv = [h,...r].map(row => row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  download(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}), `fichas-${dateStr()}.csv`);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   KEYBOARD + CLICK OUTSIDE
-══════════════════════════════════════════════════════════════ */
+/* ─── EXPORT XLSX ─── */
+function exportXLSX() {
+  if (!filtered.length) { alert('No hay fichas visibles para exportar.'); return; }
+  if (typeof XLSX === 'undefined') { alert('Librería Excel no disponible. Verifica tu conexión.'); return; }
+  const h = ['ID','Nombre','Apellido','Email','Teléfono','Fecha','Revisada'];
+  const r = filtered.map(s => [s.id, s.nombre||'', s.apellido||'', s.email||'', s.telefono||'', s.fecha||'', isReviewed(s)?'Sí':'No']);
+  const ws = XLSX.utils.aoa_to_sheet([h,...r]);
+  ws['!cols'] = [{wch:6},{wch:18},{wch:18},{wch:32},{wch:16},{wch:20},{wch:10}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Fichas');
+  XLSX.writeFile(wb, `fichas-${dateStr()}.xlsx`);
+}
+
+/* ─── UTILS ─── */
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function dateStr() { return new Date().toISOString().split('T')[0]; }
+function download(blob, name) {
+  const a = Object.assign(document.createElement('a'), {href: URL.createObjectURL(blob), download: name});
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* ─── KEYBOARD / CLICK OUTSIDE ─── */
 document.getElementById('modalBg').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
-
-/* ══════════════════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════════════════ */
-loadData();
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 </script>
 </body>
 </html>
