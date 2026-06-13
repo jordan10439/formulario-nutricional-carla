@@ -734,11 +734,12 @@ async function deleteSub(id) {
 
 /* ─── BUILD CLINIC HTML ─── */
 function clinicHTML(d) {
+  /* ── helpers ── */
   const f = (k, v, full) => {
-    const empty = !v;
+    const empty = !v && v !== 0;
     return `<div class="cf${full?' full':''}">
       <div class="cf-k">${k}</div>
-      <div class="cf-v${empty?' empty':''}">${esc(v||'No informado')}</div>
+      <div class="cf-v${empty?' empty':''}">${esc(String(v||'No informado'))}</div>
     </div>`;
   };
   const fh = (k, v, full) => `<div class="cf${full?' full':''}">
@@ -746,26 +747,39 @@ function clinicHTML(d) {
     <div class="cf-v${v?'':' empty'}">${v ? `<span class="chip-val">${esc(v)}</span>` : 'No informado'}</div>
   </div>`;
 
+  /* ── hábitos compuestos ── */
   const habitos = [
-    d.alcohol==='si' ? `🍷 Alcohol (${d.alcohol_frec||''} ${d.alcohol_cant||''})`.trim() : '',
-    d.tabaco ==='si' ? `🚬 Tabaco (${d.tabaco_frec||''} ${d.tabaco_cant||''})`.trim()  : '',
-    d.drogas ==='si' ? '⚠️ Otras sustancias' : ''
-  ].filter(Boolean).join(' · ') || 'No reporta';
+    d.alcohol==='si' ? `🍷 Alcohol — ${[d.alcohol_frec, d.alcohol_cant].filter(Boolean).join(', ')||'sin detalle'}` : '',
+    d.tabaco ==='si' ? `🚬 Tabaco — ${[d.tabaco_frec,  d.tabaco_cant ].filter(Boolean).join(', ')||'sin detalle'}` : '',
+    d.drogas ==='si' ? `⚠️ Otras sustancias — ${[d.drogas_frec, d.drogas_cant].filter(Boolean).join(', ')||'sin detalle'}` : ''
+  ].filter(Boolean).join('  ·  ') || 'No reporta';
 
+  /* ── medicamentos ── */
   const medHTML = d.tieneMed === 'si'
-    ? f('Medicamento', d.medNombre) + f('Frecuencia', d.medFrecuencia) +
-      f('Dosis', d.medDosis)       + f('Motivo', d.medMotivo)
+    ? f('¿Cuál/es?', d.medNombre, true) +
+      f('Frecuencia', d.medFrecuencia) + f('Dosis', d.medDosis) +
+      f('Motivo', d.medMotivo, true)
     : `<div class="cf full"><div class="cf-k">Medicamentos</div><div class="cf-v empty">No consume medicamentos</div></div>`;
 
+  /* ── suplementos ── */
   const supHTML = d.tieneSup === 'si'
-    ? f('Suplemento', d.supNombre) + f('Frecuencia', d.supFrecuencia) + f('Marca', d.supMarca)
-    : `<div class="cf full"><div class="cf-k">Suplementos</div><div class="cf-v empty">No consume suplementos</div></div>`;
+    ? f('¿Cuál/es?', d.supNombre, true) +
+      f('Frecuencia', d.supFrecuencia) + f('Marca', d.supMarca)
+    : `<div class="cf full"><div class="cf-k">Suplementos generales</div><div class="cf-v empty">No consume suplementos</div></div>`;
 
   const supDepHTML = d.tieneSupDep === 'si'
-    ? f('Sup. deportivo', d.supDepNombre) + f('Frec.', d.supDepFrecuencia) + f('Marca', d.supDepMarca)
-    : '';
+    ? f('¿Cuál/es (dep.)?', d.supDepNombre, true) +
+      f('Frecuencia', d.supDepFrecuencia) + f('Marca', d.supDepMarca)
+    : `<div class="cf full"><div class="cf-k">Suplementos deportivos</div><div class="cf-v empty">No consume suplementos deportivos</div></div>`;
+
+  /* ── objetivo con "otro" ── */
+  const objetivoTexto = [
+    d.objetivo ? d.objetivo.replace(/,/g,' · ') : '',
+    d.objetivoOtro ? `Otro: ${d.objetivoOtro}` : ''
+  ].filter(Boolean).join('  +  ');
 
   return `
+    <!-- ① DATOS PERSONALES -->
     <div class="clinic-block">
       <div class="clinic-title">👤 Datos personales</div>
       <div class="clinic-grid">
@@ -796,32 +810,54 @@ function clinicHTML(d) {
         ${medHTML}
         ${supHTML}
         ${supDepHTML}
+        ${f('Hábitos (alcohol / tabaco / sustancias)', habitos, true)}
       </div>
     </div>
 
     <div class="clinic-block">
-      <div class="clinic-title">🍽 Alimentación y hábitos</div>
+      <div class="clinic-title">🍽️ Alimentación y hábitos</div>
       <div class="clinic-grid">
         ${f('Tipo de alimentación', d.tipoAlimentacion ? d.tipoAlimentacion.replace(/,/g,' · ') : '', true)}
-        ${f('N° comidas al día', d.nComidas)} ${f('Agua al día', d.agua)}
-        ${f('Desayuno', d.desayunoHora ? d.desayunoHora+' — '+( d.desayunoDesc||'') : '', true)}
-        ${f('Almuerzo', d.almuerzoHora ? d.almuerzoHora+' — '+(d.almuerzoDesc||'') : '', true)}
-        ${f('Once / Merienda', d.onceHora ? d.onceHora+' — '+(d.onceDesc||'') : '', true)}
-        ${f('Cena', d.cenaHora ? d.cenaHora+' — '+(d.cenaDesc||'') : '', true)}
-        ${f('Snacks', d.snacks, true)}
         ${f('Alergias / intolerancias', d.alergias, true)}
-        ${f('Color de orina', d.colorOrina)} ${f('Sueño', d.sueno ? d.sueno+' ('+( d.horasSueno||'')+'h)' : '')}
-        ${f('Nivel de estrés', d.estres)} ${f('Hábitos', habitos, true)}
+        ${f('Alimentos que rechaza', d.rechazo, true)}
+        ${f('Alimentos que causan hinchazón', d.distension, true)}
+        ${f('Apetito general', d.apetito)}               ${f('¿Cuándo siente más hambre?', d.horarioApetito)}
+        ${f('Comidas al día', d.tiemposComida)}          ${f('¿Dónde come habitualmente?', d.dondecome)}
+        ${f('¿Quién compra los alimentos?', d.quienCompra)} ${f('¿Quién cocina?', d.quienCocina)}
+      </div>
+    </div>
+
+    <div class="clinic-block">
+      <div class="clinic-title">💧 Salud digestiva e hidratación</div>
+      <div class="clinic-grid">
+        ${f('Frecuencia de evacuación', d.frecuenciaEvacuacion)} ${f('¿Usa laxante?', d.laxante)}
+        ${f('Color de orina habitual', d.colorOrina, true)}
       </div>
     </div>
 
     <div class="clinic-block">
       <div class="clinic-title">🏃 Actividad física</div>
       <div class="clinic-grid">
-        ${f('Realiza actividad', d.tieneActividad==='si' ? 'Sí' : 'No')}
-        ${f('Tipo', d.actividadTipo)} ${f('Frecuencia', d.actividadFrecuencia)}
-        ${f('Duración', d.actividadDuracion)} ${f('Horario', d.actividadHorario)}
-        ${f('Objetivo físico', d.objetivoFisico, true)}
+        ${f('Deporte / actividad física', d.deporte, true)}
+        ${f('Frecuencia semanal', d.frecuenciaEjercicio)}  ${f('Duración por sesión', d.duracionEjercicio)}
+        ${f('Caminata diaria', d.caminata)}           ${f('¿Hace cuánto hace ejercicio?', d.tiempoEjercicio)}
+        ${f('Implementos en casa', d.implementos)}    ${f('Plan de ejercicio', d.planEjercicio)}
+      </div>
+    </div>
+
+    <div class="clinic-block">
+      <div class="clinic-title">⚖️ Medidas antropométricas</div>
+      <div class="clinic-grid">
+        ${f('Peso actual', d.pesoActual ? d.pesoActual+' kg' : '')}
+        ${f('Peso habitual', d.pesoHabitual ? d.pesoHabitual+' kg' : '')}
+        ${f('Estatura', d.estatura ? d.estatura+' cm' : '')}
+      </div>
+    </div>
+
+    <div class="clinic-block">
+      <div class="clinic-title">💬 Preguntas para la consulta</div>
+      <div class="clinic-grid">
+        ${f('Preguntas / temas a tratar', d.preguntas, true)}
       </div>
     </div>`;
 }
