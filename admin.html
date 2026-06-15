@@ -981,31 +981,88 @@ loadData();
 /* ─── LOAD ─── */
 async function loadData() {
   showLoading();
-  try {
-    const [sr, fr] = await Promise.all([fetch('/api/stats'), fetch('/api/submissions')]);
 
-    if (sr.ok) {
-      const { stats: s } = await sr.json();
+  /* Helper: fetch con timeout de 15s */
+  async function fetchSafe(url) {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(tid);
+      return res;
+    } catch (err) {
+      clearTimeout(tid);
+      throw new Error(err.name === 'AbortError'
+        ? 'Tiempo de espera agotado. El servidor no respondió.'
+        : 'No se pudo conectar con el servidor.');
+    }
+  }
+
+  /* Helper: parsea JSON de forma segura */
+  async function jsonSafe(res) {
+    try { return await res.json(); }
+    catch { return {}; }
+  }
+
+  try {
+    /* ── Stats (best-effort, no bloquea el resto) ── */
+    fetchSafe('/api/stats').then(async r => {
+      if (!r.ok) return;
+      const d = await jsonSafe(r);
+      const s = d.stats || {};
       $('sTotal').textContent = s.total       || '0';
       $('sNew').textContent   = s.sin_revisar || '0';
       $('sHoy').textContent   = s.hoy         || '0';
       $('sSem').textContent   = s.semana      || '0';
+    }).catch(() => {});
+
+    /* ── Submissions (crítico) ── */
+    const fr = await fetchSafe('/api/submissions');
+    const fd = await jsonSafe(fr);
+
+    /* 503 = DB no está lista aún */
+    if (fr.status === 503) {
+      showDbError(fd.message || 'La base de datos aún no está disponible.');
+      return;
     }
 
-    if (!fr.ok) throw new Error('Sesión expirada. Por favor recarga la página.');
-    const { submissions } = await fr.json();
-    all = submissions;
+    /* 401/403 = sesión expirada */
+    if (fr.status === 401 || fr.status === 403) {
+      window.location.href = '/admin/login';
+      return;
+    }
+
+    /* Otro error HTTP */
+    if (!fr.ok) {
+      showDbError(`Error del servidor (${fr.status}): ${fd.message || 'respuesta inesperada'}`);
+      return;
+    }
+
+    /* Success pero sin submissions = array vacío */
+    all = Array.isArray(fd.submissions) ? fd.submissions : [];
     applyFilters();
 
   } catch (e) {
-    $('cardsArea').innerHTML = `
-      <div class="state-box">
-        <span class="ico">⚠️</span>
-        <h3>Error al cargar</h3>
-        <p>${esc(e.message)}</p>
-      </div>`;
+    showDbError(e.message || 'Error desconocido al cargar las fichas.');
   }
 }
+
+function showDbError(msg) {
+  $('cardsArea').innerHTML = `
+    <div class="state-box">
+      <span class="ico">⚠️</span>
+      <h3>No se pudieron cargar las fichas</h3>
+      <p style="margin-bottom:16px">${esc(msg)}</p>
+      <button onclick="loadData()" style="
+        padding:10px 22px;border-radius:99px;border:none;cursor:pointer;
+        background:linear-gradient(135deg,#C96848,#A84830);color:#fff;
+        font-weight:700;font-family:'DM Sans',sans-serif;font-size:.88rem;
+        box-shadow:0 4px 14px rgba(201,104,72,.3)">
+        ↺ Reintentar
+      </button>
+    </div>`;
+}
+
 
 /* ─── FILTERS ─── */
 function applyFilters() {
@@ -1063,14 +1120,32 @@ function isReviewed(s) {
 /* ─── RENDER CARDS ─── */
 function renderCards(rows) {
   if (!rows.length) {
-    $('cardsArea').innerHTML = `
-      <div class="state-box">
-        <span class="ico">📭</span>
-        <h3>Sin resultados</h3>
-        <p>No hay fichas que coincidan con los filtros aplicados.</p>
-      </div>`;
+    /* Sin fichas en absoluto */
+    if (!all.length) {
+      $('cardsArea').innerHTML = `
+        <div class="state-box">
+          <span class="ico">📭</span>
+          <h3>Aún no hay fichas recibidas</h3>
+          <p>Cuando los pacientes completen el formulario público, sus fichas aparecerán aquí.</p>
+        </div>`;
+    } else {
+      /* Hay fichas pero los filtros no muestran nada */
+      $('cardsArea').innerHTML = `
+        <div class="state-box">
+          <span class="ico">🔍</span>
+          <h3>Sin resultados</h3>
+          <p>Ninguna ficha coincide con los filtros aplicados.</p>
+          <button onclick="clearFilters()" style="
+            margin-top:12px;padding:9px 20px;border-radius:99px;border:none;cursor:pointer;
+            background:rgba(201,104,72,.12);color:#C96848;font-weight:700;
+            font-family:'DM Sans',sans-serif;font-size:.84rem">
+            ✕ Limpiar filtros
+          </button>
+        </div>`;
+    }
     return;
   }
+
 
   $('cardsArea').innerHTML = `<div class="cards-grid">${rows.map(cardHTML).join('')}</div>`;
 }
