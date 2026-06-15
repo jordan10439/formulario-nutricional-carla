@@ -415,6 +415,10 @@
     border-color:rgba(26,74,138,.3);color:#1A4A8A;background:transparent;
   }
   .mbtn.expediente:hover{background:#1A4A8A;color:#fff;border-color:#1A4A8A}
+  .mbtn.notas{
+    border-color:rgba(100,60,160,.3);color:#5A3090;background:transparent;
+  }
+  .mbtn.notas:hover{background:#5A3090;color:#fff;border-color:#5A3090}
 
   /* Sección expediente dentro del modal de ficha */
   .exp-section{
@@ -662,6 +666,7 @@
       </div>
       <div class="mhdr-right">
         <button class="mbtn expediente" onclick="openExpediente()">📋 R24/FR Consumo</button>
+        <button class="mbtn notas" onclick="openNotas()">📝 Notas</button>
         <button class="mbtn review" id="btnRev" onclick="toggleReview()">✓ Marcar revisada</button>
         <button class="mbtn print" onclick="window.print()">🖨 PDF</button>
         <button class="mbtn close" onclick="closeModal()">✕</button>
@@ -778,6 +783,190 @@
 
 </div>
 </template>
+
+<style>
+  /* ══ NOTAS DE SEGUIMIENTO — estilos del modal ══ */
+  .nt-bg{
+    display:none;position:fixed;inset:0;z-index:2100;
+    background:rgba(10,4,20,.6);backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;padding:16px;
+  }
+  .nt-bg.open{display:flex;animation:fade-bg .2s ease}
+  .nt-modal{
+    background:#fff;border-radius:24px;width:100%;max-width:780px;
+    max-height:92vh;display:flex;flex-direction:column;
+    box-shadow:0 32px 100px rgba(10,4,20,.3);
+    animation:modal-up .3s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .nt-hdr{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 28px;border-bottom:1px solid #E8DDD5;flex-shrink:0;
+    background:linear-gradient(135deg,#F3EEF8,#FAF7FD);
+    border-radius:24px 24px 0 0;
+  }
+  .nt-hdr-left{min-width:0}
+  .nt-hdr-title{
+    font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:700;
+    color:#2A0A4A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .nt-hdr-sub{font-size:.78rem;color:#7A5A9A;margin-top:2px}
+  .nt-hdr-right{display:flex;gap:8px;flex-shrink:0}
+  .ntbtn{
+    padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:700;
+    font-family:'DM Sans',sans-serif;cursor:pointer;border:1.5px solid;
+    transition:.2s;
+  }
+  .ntbtn.add{background:#5A3090;color:#fff;border-color:#5A3090}
+  .ntbtn.add:hover{background:#3A1060}
+  .ntbtn.cancel{background:transparent;color:#5A3A2A;border-color:rgba(180,140,110,.3)}
+  .ntbtn.cancel:hover{background:#FDF5F0;border-color:#C96848;color:#C96848}
+  .nt-body{overflow-y:auto;padding:24px 28px 32px;flex:1}
+  /* Note form */
+  .nt-form{
+    background:#F8F5FD;border:1.5px solid #D8C8F0;border-radius:16px;
+    padding:20px 22px;margin-bottom:20px;
+  }
+  .nt-form-title{
+    font-size:.68rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+    color:#5A3090;margin-bottom:14px;
+  }
+  .nt-field{margin-bottom:12px}
+  .nt-field label{
+    display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:#6A5A7A;margin-bottom:4px;
+  }
+  .nt-input,.nt-textarea{
+    width:100%;padding:9px 12px;
+    border:1.5px solid rgba(140,100,200,.25);border-radius:8px;
+    font-family:'DM Sans',sans-serif;font-size:.88rem;color:#1C1410;
+    background:#fff;transition:.2s;outline:none;resize:vertical;
+  }
+  .nt-input:focus,.nt-textarea:focus{
+    border-color:#5A3090;box-shadow:0 0 0 3px rgba(90,48,144,.1);
+  }
+  .nt-textarea{min-height:88px}
+  .nt-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+  .nt-row .nt-field{flex:1;min-width:150px;margin-bottom:0}
+  .nt-file-label{
+    display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+    border-radius:8px;border:1.5px dashed rgba(140,100,200,.4);
+    color:#5A3090;font-size:.8rem;font-weight:700;cursor:pointer;
+    background:#F3EEF8;transition:.2s;white-space:nowrap;
+  }
+  .nt-file-label:hover{background:#E8DDFC;border-color:#5A3090}
+  .nt-file-name{
+    font-size:.78rem;color:#5A3090;font-style:italic;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;
+  }
+  .nt-form-btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .nt-save-btn{
+    padding:8px 20px;border-radius:8px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#7A50B0,#5A3090);color:#fff;
+    font-weight:700;font-family:'DM Sans',sans-serif;font-size:.82rem;
+    transition:.2s;box-shadow:0 4px 14px rgba(90,48,144,.25);
+  }
+  .nt-save-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(90,48,144,.35)}
+  .nt-cancel-btn{
+    padding:8px 16px;border-radius:8px;cursor:pointer;
+    background:transparent;border:1.5px solid rgba(180,140,110,.3);
+    color:#5A3A2A;font-weight:700;font-family:'DM Sans',sans-serif;font-size:.82rem;
+    transition:.2s;
+  }
+  .nt-cancel-btn:hover{background:#FDF5F0;border-color:#C96848;color:#C96848}
+  /* Note cards in history */
+  .nt-card{
+    border:1px solid #E0D0F0;border-radius:14px;padding:16px 18px;
+    margin-bottom:12px;background:#FEFCFF;
+    animation:fadeSlideIn .2s ease;
+  }
+  .nt-card:hover{border-color:#C0A8E8;background:#FAF7FE}
+  .nt-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .nt-card-fecha{
+    font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:#5A3090;flex-shrink:0;margin-top:2px;
+  }
+  .nt-card-body{font-size:.9rem;color:#2A1A3A;line-height:1.6;margin-top:8px;white-space:pre-wrap;word-break:break-word}
+  .nt-card-actions{display:flex;gap:6px;flex-shrink:0}
+  .nt-act-btn{
+    padding:4px 10px;border-radius:7px;font-size:.72rem;font-weight:700;
+    font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid;
+    transition:.16s;
+  }
+  .nt-act-btn.edit{background:#F3EEF8;color:#5A3090;border-color:#C0A0E0}
+  .nt-act-btn.edit:hover{background:#5A3090;color:#fff}
+  .nt-act-btn.del{background:#FDF5F0;color:#C96848;border-color:#E8C0A8}
+  .nt-act-btn.del:hover{background:#C96848;color:#fff}
+  .nt-card-file{
+    margin-top:8px;
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 12px;border-radius:7px;font-size:.75rem;font-weight:700;
+    background:#EAF0FA;color:#1A4A8A;border:1px solid #B0CCE8;
+    text-decoration:none;transition:.2s;
+  }
+  .nt-card-file:hover{background:#1A4A8A;color:#fff}
+  .nt-empty{
+    text-align:center;padding:32px 0;color:#9A7AB8;
+    font-size:.88rem;font-style:italic;
+  }
+  @keyframes fadeSlideIn{
+    from{opacity:0;transform:translateY(-6px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+</style>
+
+<!-- ════════════════ MODAL NOTAS DE SEGUIMIENTO ════════════════ -->
+<div class="nt-bg" id="ntBg" onclick="closeNT()">
+  <div class="nt-modal" onclick="event.stopPropagation()">
+
+    <div class="nt-hdr">
+      <div class="nt-hdr-left">
+        <div class="nt-hdr-title" id="ntHdrTitle">Notas de seguimiento</div>
+        <div class="nt-hdr-sub" id="ntHdrSub"></div>
+      </div>
+      <div class="nt-hdr-right">
+        <button class="ntbtn add" id="ntAddBtn" onclick="openNotaForm(null)">+ Nueva nota</button>
+        <button class="ntbtn cancel" onclick="closeNT()">&#10005; Cerrar</button>
+      </div>
+    </div>
+
+    <div class="nt-body" id="ntBody">
+      <!-- Form panel (hidden by default) -->
+      <div class="nt-form" id="ntForm" style="display:none">
+        <div class="nt-form-title" id="ntFormTitle">Nueva nota</div>
+        <div class="nt-row">
+          <div class="nt-field">
+            <label>Fecha</label>
+            <input class="nt-input" id="ntFecha" type="date" style="max-width:180px"/>
+          </div>
+        </div>
+        <div class="nt-field" style="margin-top:10px">
+          <label>Nota / observación</label>
+          <textarea class="nt-textarea" id="ntTexto"
+            placeholder="Ej: Me mandó una foto de su comida. Comentó que tuvo síntomas. Envió examen por WhatsApp…"></textarea>
+        </div>
+        <div class="nt-field">
+          <label>Adjunto opcional (imagen o documento)</label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <label class="nt-file-label" for="ntArchivo">
+              📎 Seleccionar archivo
+            </label>
+            <input type="file" id="ntArchivo" style="display:none"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"/>
+            <span class="nt-file-name" id="ntFileName">Ningún archivo seleccionado</span>
+            <button type="button" id="ntBorrarArchivo" style="display:none;padding:3px 8px;border-radius:6px;border:1px solid #E8C0A8;background:#FDF5F0;color:#C96848;font-size:.72rem;font-weight:700;cursor:pointer" onclick="clearNtFile()">&#10005; Quitar</button>
+          </div>
+        </div>
+        <div class="nt-form-btns">
+          <button class="nt-save-btn" id="ntSaveBtn" onclick="saveNota()">💾 Guardar nota</button>
+          <button class="nt-cancel-btn" onclick="cancelNotaForm()">Cancelar</button>
+        </div>
+      </div>
+      <!-- History list -->
+      <div id="ntList"></div>
+    </div>
+
+  </div>
+</div>
 
 <!-- ════════════════════ JS ════════════════════ -->
 <script>
@@ -1227,8 +1416,21 @@ document.getElementById('modalBg').addEventListener('click', function(e) {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    if ($('cxBg').classList.contains('open')) closeCX();
+    if ($('ntBg').classList.contains('open')) closeNT();
+    else if ($('cxBg').classList.contains('open')) closeCX();
     else closeModal();
+  }
+});
+
+/* File input preview for notas */
+document.getElementById('ntArchivo').addEventListener('change', function(){
+  const f = this.files[0];
+  if (f) {
+    $('ntFileName').textContent = f.name;
+    $('ntBorrarArchivo').style.display = 'inline-flex';
+  } else {
+    $('ntFileName').textContent = 'Ningún archivo seleccionado';
+    $('ntBorrarArchivo').style.display = 'none';
   }
 });
 
@@ -1511,6 +1713,194 @@ function closeCX() {
   document.body.style.overflow = '';
   cxConsultaId = null;
   cxReadOnly   = false;
+/* ════════════════════════════════════════════════════════════
+   NOTAS DE SEGUIMIENTO
+   ════════════════════════════════════════════════════════════ */
+
+let ntSubmissionId  = null;  // submission del paciente activo
+let ntEditingId     = null;  // id de nota en edición (null = nueva)
+let ntHasExisting   = false; // si la nota en edición ya tiene archivo
+
+/* Formatea 'YYYY-MM-DD' a 'DD/MM/YYYY' para mostrar */
+function fmtFecha(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/* Fecha de hoy en formato YYYY-MM-DD */
+function todayISO() {
+  return new Date().toISOString().slice(0,10);
+}
+
+/* ── Abrir el modal de notas ── */
+async function openNotas() {
+  if (!curId) return;
+  ntSubmissionId = curId;
+
+  const paciente = $('mName').textContent || 'Paciente';
+  $('ntHdrTitle').textContent = paciente;
+  $('ntHdrSub').textContent   = 'Notas de seguimiento';
+  $('ntBg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  cancelNotaForm();
+  await loadNotas();
+}
+
+/* ── Cargar y renderizar el historial de notas ── */
+async function loadNotas() {
+  $('ntList').innerHTML = '<div style="text-align:center;padding:32px"><span class="spin" style="font-size:2rem">⏳</span></div>';
+  const r = await fetch(`/api/submissions/${ntSubmissionId}/notas`)
+    .then(x => x.json()).catch(() => ({ notas: [] }));
+  renderNotas(r.notas || []);
+}
+
+function renderNotas(list) {
+  if (!list.length) {
+    $('ntList').innerHTML = '<div class="nt-empty">Aún no hay notas para este paciente.<br/>Haz clic en <strong>+ Nueva nota</strong> para comenzar.</div>';
+    return;
+  }
+  $('ntList').innerHTML = list.map(n => {
+    const tieneArchivo = !!n.archivo_nombre;
+    const isImg = tieneArchivo && (n.archivo_mime || '').startsWith('image/');
+    const archivoHTML = tieneArchivo
+      ? `<a class="nt-card-file" href="/api/notas/${n.id}/archivo" target="_blank">${isImg ? '🖼️' : '📎'} ${esc(n.archivo_nombre)}</a>`
+      : '';
+    return `
+      <div class="nt-card" id="ntcard-${n.id}">
+        <div class="nt-card-top">
+          <div class="nt-card-fecha">📌 ${fmtFecha(n.fecha)}</div>
+          <div class="nt-card-actions">
+            <button class="nt-act-btn edit" onclick="editNota(${n.id},'${esc(n.fecha)}',${JSON.stringify(esc(n.texto))},'${esc(n.archivo_nombre||'')}')">✏️ Editar</button>
+            <button class="nt-act-btn del"  onclick="deleteNota(${n.id})">🗑 Eliminar</button>
+          </div>
+        </div>
+        <div class="nt-card-body">${esc(n.texto)}</div>
+        ${archivoHTML}
+      </div>`;
+  }).join('');
+}
+
+/* ── Abrir el formulario (nueva o editar) ── */
+function openNotaForm(id) {
+  ntEditingId   = id;   // null = nueva
+  ntHasExisting = false;
+  $('ntForm').style.display = 'block';
+  $('ntFormTitle').textContent = id ? 'Editar nota' : 'Nueva nota';
+  $('ntFecha').value   = todayISO();
+  $('ntTexto').value   = '';
+  clearNtFile();
+  $('ntAddBtn').style.display = 'none';
+  $('ntForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* Prefill form when editing */
+function editNota(id, fecha, texto, archivoNombre) {
+  ntEditingId   = id;
+  ntHasExisting = !!archivoNombre;
+  $('ntForm').style.display = 'block';
+  $('ntFormTitle').textContent = 'Editar nota';
+  $('ntFecha').value  = fecha;
+  $('ntTexto').value  = texto;
+  if (archivoNombre) {
+    $('ntFileName').textContent = archivoNombre + ' (ya guardado)';
+    $('ntBorrarArchivo').style.display = 'inline-flex';
+  } else {
+    clearNtFile();
+  }
+  $('ntAddBtn').style.display = 'none';
+  $('ntForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function cancelNotaForm() {
+  $('ntForm').style.display = 'none';
+  $('ntAddBtn').style.display = 'inline-flex';
+  ntEditingId = null;
+  clearNtFile();
+}
+
+function clearNtFile() {
+  $('ntArchivo').value          = '';
+  $('ntFileName').textContent   = 'Ningún archivo seleccionado';
+  $('ntBorrarArchivo').style.display = 'none';
+  ntHasExisting = false;
+}
+
+/* ── Guardar nota (POST o PUT) ── */
+async function saveNota() {
+  const fecha = $('ntFecha').value || todayISO();
+  const texto = $('ntTexto').value.trim();
+  if (!texto) {
+    $('ntTexto').focus();
+    $('ntTexto').style.borderColor = '#C96848';
+    setTimeout(() => $('ntTexto').style.borderColor = '', 1500);
+    return;
+  }
+
+  const btn = $('ntSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  try {
+    const fd = new FormData();
+    fd.append('fecha', fecha);
+    fd.append('texto', texto);
+
+    const fileInput = $('ntArchivo');
+    if (fileInput.files[0]) {
+      fd.append('archivo', fileInput.files[0]);
+    } else if (!ntHasExisting) {
+      fd.append('borrarArchivo', '1');
+    }
+
+    let res;
+    if (ntEditingId) {
+      res = await fetch(`/api/notas/${ntEditingId}`, { method:'PUT', body: fd })
+        .then(r => r.json());
+    } else {
+      res = await fetch(`/api/submissions/${ntSubmissionId}/notas`, { method:'POST', body: fd })
+        .then(r => r.json());
+    }
+
+    if (!res || !res.success) throw new Error(res?.message || 'Error');
+
+    btn.textContent = '✓ Guardado';
+    setTimeout(async () => {
+      btn.disabled = false;
+      btn.textContent = '💾 Guardar nota';
+      cancelNotaForm();
+      await loadNotas();
+    }, 900);
+
+  } catch (err) {
+    alert('❌ No se pudo guardar la nota. Intenta nuevamente.');
+    btn.disabled = false;
+    btn.textContent = '💾 Guardar nota';
+  }
+}
+
+/* ── Eliminar nota ── */
+async function deleteNota(id) {
+  if (!confirm('¿Eliminar esta nota? Esta acción no se puede deshacer.')) return;
+  const el = document.getElementById(`ntcard-${id}`);
+  if (el) el.style.opacity = '.4';
+  const r = await fetch(`/api/notas/${id}`, { method:'DELETE' })
+    .then(x => x.json()).catch(() => null);
+  if (r && r.success) {
+    await loadNotas();
+  } else {
+    if (el) el.style.opacity = '1';
+    alert('❌ No se pudo eliminar la nota.');
+  }
+}
+
+/* ── Cerrar el modal de notas ── */
+function closeNT() {
+  $('ntBg').classList.remove('open');
+  document.body.style.overflow = '';
+  ntEditingId = null;
+  cancelNotaForm();
 }
 
 </script>

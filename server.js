@@ -109,6 +109,22 @@ async function initDB() {
     );
     CREATE INDEX IF NOT EXISTS idx_consultas_submission ON consultas(submission_id);
   `);
+  /* Notas de seguimiento */
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS notas_seguimiento (
+      id              SERIAL PRIMARY KEY,
+      submission_id   INTEGER REFERENCES submissions(id) ON DELETE CASCADE,
+      fecha           DATE        NOT NULL DEFAULT CURRENT_DATE,
+      texto           TEXT        NOT NULL,
+      archivo_nombre  VARCHAR(255),
+      archivo_mime    VARCHAR(100),
+      archivo_size    INTEGER,
+      archivo_data    BYTEA,
+      created_at      TIMESTAMPTZ DEFAULT NOW(),
+      updated_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_notas_submission ON notas_seguimiento(submission_id);
+  `);
 }
 
 /* ── MULTER (memory storage, max 8 MB per file, 5 files) ──────── */
@@ -446,6 +462,150 @@ app.post('/api/consultas/:id/duplicate', requireAdmin, async (req, res) => {
       [submission_id, newTitle.slice(0,200), JSON.stringify(data)]
     );
     res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* ================================================================
+   NOTAS DE SEGUIMIENTO
+   ================================================================ */
+const uploadNota = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 16 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf','image/jpeg','image/jpg','image/png','image/webp',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    cb(new Error('Formato no permitido.'));
+  }
+});
+
+/* GET /api/submissions/:id/notas — lista (sin datos binarios) */
+app.get('/api/submissions/:id/notas', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.json({ success: true, notas: [] });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const r = await getPool().query(`
+      SELECT id, fecha, texto, archivo_nombre, archivo_mime, archivo_size,
+             to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS creada,
+             to_char(updated_at  AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS editada
+      FROM notas_seguimiento
+      WHERE submission_id = $1
+      ORDER BY fecha DESC, created_at DESC`, [id]);
+    res.json({ success: true, notas: r.rows });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* POST /api/submissions/:id/notas — crear nota */
+app.post('/api/submissions/:id/notas', requireAdmin, uploadNota.single('archivo'), async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const fecha = req.body.fecha || new Date().toISOString().slice(0,10);
+    const texto = (req.body.texto || '').trim();
+    if (!texto) return res.status(400).json({ success: false, message: 'El texto es requerido.' });
+    const f = req.file;
+    const r = await getPool().query(
+      `INSERT INTO notas_seguimiento
+         (submission_id, fecha, texto, archivo_nombre, archivo_mime, archivo_size, archivo_data)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+      [id, fecha, texto,
+       f ? f.originalname : null,
+       f ? f.mimetype     : null,
+       f ? f.size         : null,
+       f ? f.buffer       : null]
+    );
+    res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* GET /api/notas/:id — datos completos (sin binario) */
+app.get('/api/notas/:id', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const r = await getPool().query(
+      `SELECT id, submission_id, fecha, texto, archivo_nombre, archivo_mime, archivo_size
+       FROM notas_seguimiento WHERE id=$1`, [id]);
+    if (!r.rows.length) return res.status(404).json({ success: false });
+    res.json({ success: true, nota: r.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* PUT /api/notas/:id — actualizar nota */
+app.put('/api/notas/:id', requireAdmin, uploadNota.single('archivo'), async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const fecha = req.body.fecha || new Date().toISOString().slice(0,10);
+    const texto = (req.body.texto || '').trim();
+    if (!texto) return res.status(400).json({ success: false, message: 'El texto es requerido.' });
+    const f = req.file;
+    if (f) {
+      await getPool().query(
+        `UPDATE notas_seguimiento
+         SET fecha=$1, texto=$2, archivo_nombre=$3, archivo_mime=$4, archivo_size=$5, archivo_data=$6, updated_at=NOW()
+         WHERE id=$7`,
+        [fecha, texto, f.originalname, f.mimetype, f.size, f.buffer, id]);
+    } else if (req.body.borrarArchivo === '1') {
+      await getPool().query(
+        `UPDATE notas_seguimiento
+         SET fecha=$1, texto=$2, archivo_nombre=NULL, archivo_mime=NULL, archivo_size=NULL, archivo_data=NULL, updated_at=NOW()
+         WHERE id=$3`, [fecha, texto, id]);
+    } else {
+      await getPool().query(
+        `UPDATE notas_seguimiento SET fecha=$1, texto=$2, updated_at=NOW() WHERE id=$3`,
+        [fecha, texto, id]);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* DELETE /api/notas/:id */
+app.delete('/api/notas/:id', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    await getPool().query('DELETE FROM notas_seguimiento WHERE id=$1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* GET /api/notas/:id/archivo — descarga el archivo adjunto */
+app.get('/api/notas/:id/archivo', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const r = await getPool().query(
+      `SELECT archivo_nombre, archivo_mime, archivo_size, archivo_data
+       FROM notas_seguimiento WHERE id=$1`, [id]);
+    if (!r.rows.length || !r.rows[0].archivo_data)
+      return res.status(404).json({ success: false });
+    const { archivo_nombre, archivo_mime, archivo_size, archivo_data } = r.rows[0];
+    res.setHeader('Content-Type', archivo_mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(archivo_nombre)}"`);
+    res.setHeader('Content-Length', archivo_size);
+    res.send(archivo_data);
   } catch (err) {
     res.status(500).json({ success: false });
   }
