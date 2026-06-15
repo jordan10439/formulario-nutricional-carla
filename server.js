@@ -5,6 +5,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const multer  = require('multer');
 const path    = require('path');
 
 const app  = express();
@@ -83,7 +84,36 @@ async function initDB() {
     ALTER TABLE submissions ADD COLUMN IF NOT EXISTS reviewed    BOOLEAN DEFAULT FALSE;
     ALTER TABLE submissions ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
   `);
+  /* Attachments table */
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS attachments (
+      id            SERIAL PRIMARY KEY,
+      submission_id INTEGER REFERENCES submissions(id) ON DELETE CASCADE,
+      filename      VARCHAR(255),
+      mimetype      VARCHAR(100),
+      size          INTEGER,
+      data          BYTEA,
+      created_at    TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_att_submission ON attachments(submission_id);
+  `);
 }
+
+/* ── MULTER (memory storage, max 8 MB per file, 5 files) ──────── */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024, files: 5 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'image/jpeg', 'image/jpg', 'image/png',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    cb(new Error('Formato no permitido. Use PDF, JPG, PNG o Word.'));
+  }
+});
 
 /* ── HEALTH (always responds, even without DB) ──────────────── */
 app.get('/health', (_req, res) => {
@@ -109,27 +139,88 @@ function requireAdmin(req, res, next) {
    PUBLIC API
    ================================================================ */
 
-/* POST /api/submissions — save form */
-app.post('/api/submissions', async (req, res) => {
+/* POST /api/submissions — save form + optional file attachments */
+app.post('/api/submissions', upload.array('adjuntos', 5), async (req, res) => {
   if (!dbReady) {
     return res.status(503).json({ success: false, message: 'Base de datos no disponible aún. Intenta en unos segundos.' });
   }
   try {
+    /* Form data comes as multipart; the JSON fields are in req.body */
     const data     = req.body;
     const nombre   = (data.nombre   || '').toString().trim().slice(0, 120);
     const apellido = (data.apellido || '').toString().trim().slice(0, 120);
     const email    = (data.email    || '').toString().trim().slice(0, 250);
     const tel      = data.telefono  ? `+569${data.telefono}` : null;
 
-    await getPool().query(
+    const db = getPool();
+    const result = await db.query(
       `INSERT INTO submissions (nombre, apellido, email, telefono, data)
-       VALUES ($1, $2, $3, $4, $5)`,
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
       [nombre || null, apellido || null, email || null, tel, JSON.stringify(data)]
     );
+    const submissionId = result.rows[0].id;
+
+    /* Save attachments if any */
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        await db.query(
+          `INSERT INTO attachments (submission_id, filename, mimetype, size, data)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [submissionId, file.originalname, file.mimetype, file.size, file.buffer]
+        );
+      }
+    }
+
     res.json({ success: true, message: 'Ficha guardada correctamente' });
   } catch (err) {
     console.error('Error guardando submission:', err.message);
-    res.status(500).json({ success: false, message: 'Error al guardar la ficha.' });
+    /* Multer validation errors */
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ success: false, message: 'Un archivo supera el tamaño máximo de 8 MB.' });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ success: false, message: 'Máximo 5 archivos permitidos.' });
+    }
+    res.status(500).json({ success: false, message: err.message || 'Error al guardar la ficha.' });
+  }
+});
+
+/* GET /api/submissions/:id/attachments — list files for a submission */
+app.get('/api/submissions/:id/attachments', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.json({ success: true, attachments: [] });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const r = await getPool().query(
+      `SELECT id, filename, mimetype, size,
+              to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha
+       FROM attachments WHERE submission_id = $1 ORDER BY id`,
+      [id]
+    );
+    res.json({ success: true, attachments: r.rows });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* GET /api/attachments/:id/download — stream file to browser */
+app.get('/api/attachments/:id/download', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const r = await getPool().query(
+      `SELECT filename, mimetype, size, data FROM attachments WHERE id = $1`,
+      [id]
+    );
+    if (!r.rows.length) return res.status(404).json({ success: false });
+    const file = r.rows[0];
+    res.setHeader('Content-Type', file.mimetype);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.filename)}"`);
+    res.setHeader('Content-Length', file.size);
+    res.send(file.data);
+  } catch (err) {
+    res.status(500).json({ success: false });
   }
 });
 

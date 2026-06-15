@@ -330,6 +330,22 @@
     background:#FDF5F0;color:#C96848;font-weight:700;font-size:.88rem;
   }
 
+  /* Attachment list in modal */
+  .att-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .att-row{
+    display:flex;align-items:center;gap:10px;
+    background:#FAFCFE;border:1px solid #D8EAF4;border-radius:10px;padding:10px 14px;
+  }
+  .att-icon{font-size:1.15rem;flex-shrink:0}
+  .att-name{flex:1;font-size:.88rem;color:#1C2A38;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .att-size{font-size:.75rem;color:#7A99B8;white-space:nowrap}
+  .att-dl{
+    flex-shrink:0;padding:5px 12px;border-radius:8px;font-size:.78rem;font-weight:700;
+    background:#EAF3FB;color:#2A6A9A;text-decoration:none;border:1px solid #B8D0E8;
+    transition:.2s;white-space:nowrap;
+  }
+  .att-dl:hover{background:#4A90C4;color:#fff;border-color:#4A90C4}
+
   /* Review badge in modal */
   .m-badge{
     display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;
@@ -667,7 +683,10 @@ async function openModal(id) {
   $('mMeta').innerHTML   = '';
   $('mBody').innerHTML   = '<div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>';
 
-  const json = await fetch(`/api/submissions/${id}`).then(r => r.json());
+  const [json, attJson] = await Promise.all([
+    fetch(`/api/submissions/${id}`).then(r => r.json()),
+    fetch(`/api/submissions/${id}/attachments`).then(r => r.json()).catch(() => ({ attachments: [] }))
+  ]);
   if (!json.success) {
     $('mBody').innerHTML = '<div class="state-box"><span class="ico">⚠️</span><h3>No se pudo cargar</h3></div>';
     return;
@@ -690,7 +709,9 @@ async function openModal(id) {
   $('printDate').textContent = 'Impreso el ' +
     new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
 
-  $('mBody').innerHTML = clinicHTML(d);
+  /* Render clinical form data + attachments */
+  const atts = attJson.attachments || [];
+  $('mBody').innerHTML = clinicHTML(d) + renderAttachments(id, atts);
 }
 
 function closeModal() {
@@ -732,7 +753,43 @@ async function deleteSub(id) {
   }
 }
 
-/* ─── BUILD CLINIC HTML ─── */
+/* ─── RENDER ATTACHMENTS ────────────────────────────────────── */
+function renderAttachments(submissionId, atts) {
+  const attIcon = mime => {
+    if (mime === 'application/pdf') return '📄';
+    if (mime.startsWith('image/'))   return '🖼️';
+    return '📝';
+  };
+  const fmtSize = bytes => {
+    if (bytes < 1024)       return bytes + ' B';
+    if (bytes < 1024*1024)  return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1024/1024).toFixed(1) + ' MB';
+  };
+
+  if (!atts || !atts.length) {
+    return `<div class="clinic-block">
+      <div class="clinic-title">📎 Exámenes y documentos adjuntos</div>
+      <div style="padding:12px 0;color:#9AACBA;font-size:.88rem;">No se adjuntaron documentos en esta ficha.</div>
+    </div>`;
+  }
+
+  const rows = atts.map(a => `
+    <div class="att-row">
+      <span class="att-icon">${attIcon(a.mimetype)}</span>
+      <span class="att-name" title="${esc(a.filename)}">${esc(a.filename)}</span>
+      <span class="att-size">${fmtSize(a.size)}</span>
+      <a class="att-dl" href="/api/attachments/${a.id}/download" download="${esc(a.filename)}" target="_blank">
+        ⤓ Descargar
+      </a>
+    </div>`).join('');
+
+  return `<div class="clinic-block">
+    <div class="clinic-title">📎 Exámenes y documentos adjuntos</div>
+    <div class="att-list">${rows}</div>
+  </div>`;
+}
+
+/* ─── BUILD CLINIC HTML ────────────────────────────────────── */
 function clinicHTML(d) {
   /* ── helpers ── */
   const f = (k, v, full) => {

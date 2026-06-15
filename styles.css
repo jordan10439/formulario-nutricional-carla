@@ -927,3 +927,96 @@ body{
 ::-webkit-scrollbar-track{background:var(--cream-w);}
 ::-webkit-scrollbar-thumb{background:var(--sage-light);border-radius:6px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--sage-mid);}
+
+/* ── FILE UPLOAD ZONE ────────────────────────────────────────── */
+.upload-zone {
+  border: 2px dashed #B8D0E8;
+  border-radius: 16px;
+  background: #F5F9FD;
+  transition: border-color .25s, background .25s;
+  cursor: pointer;
+  margin-top: 12px;
+}
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: #4A90C4;
+  background: #EAF3FB;
+}
+.upload-zone-inner {
+  padding: 36px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.upload-icon { opacity: .75; }
+.upload-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: .95rem;
+  color: #3A4A5A;
+  margin: 0;
+}
+.upload-link {
+  background: none;
+  border: none;
+  color: #4A90C4;
+  font-family: 'Outfit', sans-serif;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.upload-link:hover { color: #2A6A9A; }
+.upload-hint {
+  font-size: .78rem;
+  color: #7A99B8;
+  margin: 0;
+}
+/* File list */
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #D0E4F2;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: 'Outfit', sans-serif;
+  font-size: .85rem;
+  color: #2A3A4A;
+  animation: fadeSlideIn .2s ease;
+}
+.file-item-icon { font-size: 1.15rem; flex-shrink: 0; }
+.file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-item-size { font-size: .75rem; color: #7A99B8; white-space: nowrap; }
+.file-item-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #B0C4D4;
+  padding: 2px 4px;
+  border-radius: 6px;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color .2s;
+}
+.file-item-remove:hover { color: #D55; }
+@keyframes fadeSlideIn {
+  from { opacity:0; transform:translateY(-6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@media(max-width:600px){
+  .upload-zone-inner { padding: 28px 16px; }
+}

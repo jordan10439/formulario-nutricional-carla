@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUrine();
   initPhoneField();
   initInputFeedback();
+  initUpload();
   updateProgress(1);
 });
 
@@ -245,6 +246,92 @@ function initUrine() {
   });
 }
 
+/* ── FILE UPLOAD (drag-and-drop + preview) ──────────────── */
+let selectedFiles = []; // maintain own list so we can remove individual files
+
+function fileIcon(mime) {
+  if (mime === 'application/pdf') return '📄';
+  if (mime.startsWith('image/'))   return '🖼️';
+  return '📝'; // Word / generic
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024)       return bytes + ' B';
+  if (bytes < 1024*1024)  return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  if (!list) return;
+  list.innerHTML = '';
+  selectedFiles.forEach((file, idx) => {
+    const li = document.createElement('li');
+    li.className = 'file-item';
+    li.innerHTML = `
+      <span class="file-item-icon">${fileIcon(file.type)}</span>
+      <span class="file-item-name" title="${file.name}">${file.name}</span>
+      <span class="file-item-size">${formatBytes(file.size)}</span>
+      <button type="button" class="file-item-remove" aria-label="Eliminar" data-idx="${idx}">×</button>
+    `;
+    li.querySelector('.file-item-remove').addEventListener('click', () => {
+      selectedFiles.splice(idx, 1);
+      renderFileList();
+    });
+    list.appendChild(li);
+  });
+}
+
+function addFiles(newFiles) {
+  const MAX = 5;
+  const MAX_BYTES = 8 * 1024 * 1024;
+  for (const file of newFiles) {
+    if (selectedFiles.length >= MAX) {
+      alert('Máximo 5 archivos permitidos.'); break;
+    }
+    if (file.size > MAX_BYTES) {
+      alert(`«${file.name}» supera el límite de 8 MB.`); continue;
+    }
+    const allowed = ['application/pdf','image/jpeg','image/jpg','image/png',
+      'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowed.includes(file.type)) {
+      alert(`Formato no permitido: «${file.name}». Use PDF, JPG, PNG o Word.`); continue;
+    }
+    selectedFiles.push(file);
+  }
+  renderFileList();
+}
+
+function initUpload() {
+  const zone  = document.getElementById('uploadZone');
+  const input = document.getElementById('adjuntosInput');
+  if (!zone || !input) return;
+
+  /* Click anywhere on zone → open picker */
+  zone.addEventListener('click', (e) => {
+    if (e.target.classList.contains('upload-link')) return; // handled by onclick
+    input.click();
+  });
+
+  /* File input change */
+  input.addEventListener('change', () => {
+    if (input.files.length) addFiles(Array.from(input.files));
+    input.value = ''; // reset so same file can be re-added after removal
+  });
+
+  /* Drag and drop */
+  zone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) addFiles(Array.from(e.dataTransfer.files));
+  });
+}
+
 /* ── INPUT FEEDBACK ─────────────────────────────────────────── */
 function initInputFeedback() {
   document.querySelectorAll('.field-input,.field-textarea,.field-select').forEach(el => {
@@ -269,23 +356,28 @@ document.getElementById('nutritionForm').addEventListener('submit', async (e) =>
   btn.innerHTML = `<svg class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Enviando...`;
 
   try {
-    // Collect all form data
-    const form = document.getElementById('nutritionForm');
-    const raw  = new FormData(form);
-    const data = {};
-    raw.forEach((val, key) => { data[key] = val; });
+    /* Build multipart FormData so files + fields go in one request */
+    const form    = document.getElementById('nutritionForm');
+    const rawForm = new FormData(form);
+    const fd      = new FormData();
 
-    // Add chip fields (hidden inputs)
-    ['objetivo', 'tipoAlimentacion', 'colorOrina'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) data[id] = el.value;
+    /* Copy all text/radio/select fields */
+    rawForm.forEach((val, key) => {
+      if (key !== 'adjuntos') fd.append(key, val);
     });
 
-    // Send to backend
+    /* Add chip/hidden fields */
+    ['objetivo','tipoAlimentacion','colorOrina'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) fd.set(id, el.value);
+    });
+
+    /* Attach files from selectedFiles array */
+    selectedFiles.forEach(file => fd.append('adjuntos', file, file.name));
+
     const res = await fetch('/api/submissions', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(data)
+      method: 'POST',
+      body:   fd          // browser sets multipart/form-data + boundary automatically
     });
 
     const json = await res.json();
@@ -324,6 +416,10 @@ function resetForm() {
   // Reset reveal blocks
   ['detalleMed','detalleSup','detalleSupDep'].forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; });
   const cir = document.getElementById('cirugia'); if(cir){ cir.style.display='none'; cir.value=''; }
+
+  // Reset file list
+  selectedFiles = [];
+  renderFileList();
 
   // Reset stepper
   for (let i=1;i<=TOTAL;i++) {
