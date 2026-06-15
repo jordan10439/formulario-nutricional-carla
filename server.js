@@ -97,6 +97,18 @@ async function initDB() {
     );
     CREATE INDEX IF NOT EXISTS idx_att_submission ON attachments(submission_id);
   `);
+  /* Consultas / expediente clínico */
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS consultas (
+      id            SERIAL PRIMARY KEY,
+      submission_id INTEGER REFERENCES submissions(id) ON DELETE CASCADE,
+      titulo        VARCHAR(200) NOT NULL DEFAULT 'Consulta',
+      data          JSONB        NOT NULL DEFAULT '{}',
+      created_at    TIMESTAMPTZ  DEFAULT NOW(),
+      updated_at    TIMESTAMPTZ  DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_consultas_submission ON consultas(submission_id);
+  `);
 }
 
 /* ── MULTER (memory storage, max 8 MB per file, 5 files) ──────── */
@@ -339,6 +351,101 @@ app.get('/api/stats', requireAdmin, async (req, res) => {
         COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')   AS semana
       FROM submissions`);
     res.json({ success: true, stats: r.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* ================================================================
+   CONSULTAS — EXPEDIENTE CLÍNICO
+   ================================================================ */
+
+/* GET /api/submissions/:id/consultas — lista de consultas del paciente */
+app.get('/api/submissions/:id/consultas', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.json({ success: true, consultas: [] });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const r = await getPool().query(`
+      SELECT id, titulo,
+             to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_creacion,
+             to_char(updated_at  AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_edicion
+      FROM consultas WHERE submission_id = $1
+      ORDER BY created_at ASC`, [id]);
+    res.json({ success: true, consultas: r.rows });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* POST /api/submissions/:id/consultas — nueva consulta */
+app.post('/api/submissions/:id/consultas', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const { titulo = 'Consulta', data = {} } = req.body;
+    const r = await getPool().query(
+      `INSERT INTO consultas (submission_id, titulo, data) VALUES ($1,$2,$3) RETURNING id`,
+      [id, titulo.slice(0,200), JSON.stringify(data)]
+    );
+    res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* GET /api/consultas/:id — datos completos de una consulta */
+app.get('/api/consultas/:id', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const r = await getPool().query(
+      `SELECT id, submission_id, titulo, data,
+              to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_creacion,
+              to_char(updated_at  AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_edicion
+       FROM consultas WHERE id = $1`, [id]);
+    if (!r.rows.length) return res.status(404).json({ success: false });
+    res.json({ success: true, consulta: r.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* PUT /api/consultas/:id — actualizar consulta */
+app.put('/api/consultas/:id', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const { titulo, data } = req.body;
+    await getPool().query(
+      `UPDATE consultas SET titulo=$1, data=$2, updated_at=NOW() WHERE id=$3`,
+      [titulo.slice(0,200), JSON.stringify(data), id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* POST /api/consultas/:id/duplicate — duplicar consulta */
+app.post('/api/consultas/:id/duplicate', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const orig = await getPool().query(
+      `SELECT submission_id, titulo, data FROM consultas WHERE id=$1`, [id]);
+    if (!orig.rows.length) return res.status(404).json({ success: false });
+    const { submission_id, titulo, data } = orig.rows[0];
+    const newTitle = titulo.endsWith('(copia)') ? titulo : `${titulo} (copia)`;
+    const r = await getPool().query(
+      `INSERT INTO consultas (submission_id, titulo, data) VALUES ($1,$2,$3) RETURNING id`,
+      [submission_id, newTitle.slice(0,200), JSON.stringify(data)]
+    );
+    res.json({ success: true, id: r.rows[0].id });
   } catch (err) {
     res.status(500).json({ success: false });
   }
