@@ -2,27 +2,6 @@
    SCRIPT.JS  v3  —  Carla Guerrero Nutricionista
    ================================================================ */
 
-/* ── GUARD: debe abrirse desde el servidor, no como archivo local ─ */
-if (location.protocol === 'file:') {
-  document.body.style.cssText = 'margin:0;font-family:sans-serif;background:#FFF3CD;display:flex;align-items:center;justify-content:center;min-height:100vh;';
-  document.body.innerHTML = `
-    <div style="max-width:560px;padding:40px;background:#fff;border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,.12);text-align:center;border-top:6px solid #E6A817;">
-      <div style="font-size:3rem;margin-bottom:16px;">⚠️</div>
-      <h2 style="color:#1C1410;margin:0 0 12px;font-size:1.5rem;">Formulario abierto incorrectamente</h2>
-      <p style="color:#4A3A2A;line-height:1.6;margin:0 0 24px;">
-        Este formulario no puede abrirse haciendo doble clic en el archivo.<br/>
-        Debe ejecutarse desde el servidor Express.
-      </p>
-      <div style="background:#F5F0E8;border-radius:12px;padding:20px;text-align:left;font-family:monospace;font-size:.9rem;color:#2A1F10;margin-bottom:24px;line-height:2;">
-        <b>1.</b> Abre la Terminal en la carpeta del proyecto<br/>
-        <b>2.</b> Ejecuta: <code style="background:#E8E0D0;padding:2px 8px;border-radius:4px;">npm run dev</code><br/>
-        <b>3.</b> Abre el navegador en: <a href="http://localhost:3000" style="color:#C96848;">http://localhost:3000</a>
-      </div>
-      <p style="color:#8A7A6A;font-size:.85rem;margin:0;">Si el formulario ya está desplegado en Railway, accede a través de la URL pública entregada por Railway.</p>
-    </div>`;
-  throw new Error('Formulario abierto desde file:// — se requiere servidor HTTP');
-}
-
 let currentStep = 1;
 const TOTAL = 4;
 
