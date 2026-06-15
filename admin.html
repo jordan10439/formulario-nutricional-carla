@@ -661,7 +661,7 @@
         <div class="m-meta" id="mMeta">—</div>
       </div>
       <div class="mhdr-right">
-        <button class="mbtn expediente" onclick="openExpediente()">📋 Expediente</button>
+        <button class="mbtn expediente" onclick="openExpediente()">📋 R24/FR Consumo</button>
         <button class="mbtn review" id="btnRev" onclick="toggleReview()">✓ Marcar revisada</button>
         <button class="mbtn print" onclick="window.print()">🖨 PDF</button>
         <button class="mbtn close" onclick="closeModal()">✕</button>
@@ -685,7 +685,7 @@
 
     <div class="cx-hdr">
       <div class="cx-hdr-left">
-        <div class="cx-hdr-title" id="cxHdrTitle">Expediente clínico</div>
+        <div class="cx-hdr-title" id="cxHdrTitle">R24/FR Consumo</div>
         <div class="cx-hdr-sub" id="cxHdrSub"></div>
       </div>
       <div class="cx-hdr-right">
@@ -705,215 +705,74 @@
 <template id="cxFormTemplate">
 <div class="cx-form" id="cxFormInner">
 
-  <!-- TÍTULO -->
+  <!-- TÍTULO Y FECHA -->
   <div class="cx-section">
-    <div class="cx-sec-title">📋 Identificación de la consulta</div>
-    <div class="cx-field">
-      <label>Título / tipo de consulta</label>
-      <input class="cx-titulo-input" id="cfTitulo" type="text" placeholder="Ej: Consulta inicial, Control 1, Control 2…" maxlength="200"/>
-    </div>
-  </div>
-
-  <!-- ANAMNESIS SOCIAL -->
-  <div class="cx-section">
-    <div class="cx-sec-title">👤 Anamnesis social</div>
+    <div class="cx-sec-title">📋 Identificación del registro</div>
     <div class="cx-grid">
-      <div class="cx-field"><label>Ocupación</label><input class="cx-input" data-key="ocupacion" type="text"/></div>
-      <div class="cx-field"><label>Jornada laboral</label><input class="cx-input" data-key="jornada" type="text"/></div>
-      <div class="cx-field"><label>Medio de transporte</label><input class="cx-input" data-key="transporte" type="text"/></div>
-      <div class="cx-field"><label>¿Con quién vive?</label><input class="cx-input" data-key="convivencia" type="text"/></div>
-    </div>
-  </div>
-
-  <!-- HISTORIA CLÍNICA -->
-  <div class="cx-section">
-    <div class="cx-sec-title">🎯 Historia clínica y objetivos</div>
-    <div class="cx-grid">
-      <div class="cx-field cx-full"><label>Motivación para consultar</label><textarea class="cx-textarea" data-key="motivacion"></textarea></div>
-      <div class="cx-field cx-full"><label>Objetivo(s) del paciente</label><textarea class="cx-textarea" data-key="objetivo"></textarea></div>
-      <div class="cx-field"><label>¿Cirugía previa?</label>
-        <select class="cx-select" data-key="tieneCirugia">
-          <option value="">—</option><option value="no">No</option><option value="si">Sí</option>
-        </select>
+      <div class="cx-field cx-full"><label>Título / tipo de registro</label>
+        <input class="cx-titulo-input" id="cfTitulo" type="text" placeholder="Ej: Consulta inicial, Control 1, Control 2…" maxlength="200"/>
       </div>
-      <div class="cx-field"><label>¿Cuál cirugía?</label><input class="cx-input" data-key="cirugia" type="text"/></div>
-      <div class="cx-field cx-full"><label>Experiencia con dietas previas</label><textarea class="cx-textarea" data-key="dietaPrevia"></textarea></div>
+      <div class="cx-field"><label>Fecha de la consulta</label>
+        <input class="cx-input" data-key="fechaConsulta" type="date"/>
+      </div>
+      <div class="cx-field"><label>Hora inicio</label>
+        <input class="cx-input" data-key="horaConsulta" type="time"/>
+      </div>
     </div>
   </div>
 
-  <!-- ENFERMEDADES -->
+  <!-- ENCUESTA DE TENDENCIA DE CONSUMO -->
   <div class="cx-section">
-    <div class="cx-sec-title">🏥 Antecedentes de enfermedades</div>
-    <table class="enf-table">
-      <thead><tr><th>Enfermedad</th><th>Yo sí</th><th>Yo no</th><th>Familiar</th><th>¿Cuál / observaciones?</th></tr></thead>
-      <tbody id="cfEnfTbody">
-      </tbody>
+    <div class="cx-sec-title">🥗 Encuesta de tendencia de consumo</div>
+    <div style="overflow-x:auto">
+    <table class="enf-table" style="min-width:560px">
+      <thead>
+        <tr>
+          <th style="width:34%">Alimento</th>
+          <th>Frecuencia</th>
+          <th>Cantidad</th>
+          <th style="width:28%">Observación</th>
+        </tr>
+      </thead>
+      <tbody id="cfConsumoTbody"></tbody>
     </table>
-    <div class="cx-field" style="margin-top:12px">
-      <label>Observaciones adicionales (ej. diabetes tipo 1, ACV, etc.)</label>
-      <textarea class="cx-textarea" data-key="enfObs"></textarea>
     </div>
   </div>
 
-  <!-- MEDICAMENTOS -->
+  <!-- RECORDATORIO 24 HORAS -->
   <div class="cx-section">
-    <div class="cx-sec-title">💊 Medicamentos y suplementos</div>
-    <div class="cx-grid">
-      <div class="cx-field"><label>¿Consume medicamentos?</label>
-        <select class="cx-select" data-key="tieneMed">
-          <option value="">—</option><option value="no">No</option><option value="si">Sí</option>
-        </select>
-      </div>
-      <div class="cx-field"><label>Medicamento — ¿cuál/es?</label><input class="cx-input" data-key="medNombre" type="text"/></div>
-      <div class="cx-field"><label>Medicamento — frecuencia</label><input class="cx-input" data-key="medFrecuencia" type="text"/></div>
-      <div class="cx-field"><label>Medicamento — dosis</label><input class="cx-input" data-key="medDosis" type="text"/></div>
-      <div class="cx-field cx-full"><label>Medicamento — motivo de consumo</label><input class="cx-input" data-key="medMotivo" type="text"/></div>
-
-      <div class="cx-field"><label>¿Consume suplementos?</label>
-        <select class="cx-select" data-key="tieneSup">
-          <option value="">—</option><option value="no">No</option><option value="si">Sí</option>
-        </select>
-      </div>
-      <div class="cx-field"><label>Suplemento — ¿cuál/es?</label><input class="cx-input" data-key="supNombre" type="text"/></div>
-      <div class="cx-field"><label>Suplemento — frecuencia</label><input class="cx-input" data-key="supFrecuencia" type="text"/></div>
-      <div class="cx-field"><label>Suplemento — marca</label><input class="cx-input" data-key="supMarca" type="text"/></div>
-
-      <div class="cx-field"><label>¿Suplementos deportivos?</label>
-        <select class="cx-select" data-key="tieneSupDep">
-          <option value="">—</option><option value="no">No</option><option value="si">Sí</option>
-        </select>
-      </div>
-      <div class="cx-field"><label>Sup. deportivo — ¿cuál/es?</label><input class="cx-input" data-key="supDepNombre" type="text"/></div>
-      <div class="cx-field"><label>Sup. deportivo — frecuencia</label><input class="cx-input" data-key="supDepFrecuencia" type="text"/></div>
-      <div class="cx-field"><label>Sup. deportivo — marca</label><input class="cx-input" data-key="supDepMarca" type="text"/></div>
+    <div class="cx-sec-title">⏱️ Recordatorio de 24 horas (R24)</div>
+    <div style="overflow-x:auto">
+    <table class="enf-table" style="min-width:600px">
+      <thead>
+        <tr>
+          <th style="width:20%">Tiempo de comida</th>
+          <th style="width:12%">Hora</th>
+          <th>Preparación / alimentos</th>
+          <th style="width:22%">Observaciones</th>
+          <th style="width:10%">Kcal</th>
+        </tr>
+      </thead>
+      <tbody id="cfR24Tbody"></tbody>
+    </table>
     </div>
-  </div>
-
-  <!-- HÁBITOS -->
-  <div class="cx-section">
-    <div class="cx-sec-title">🍷 Hábitos</div>
-    <div class="cx-grid">
-      <div class="cx-field"><label>Alcohol — ¿consume?</label>
-        <select class="cx-select" data-key="alcohol"><option value="">—</option><option value="no">No</option><option value="si">Sí</option></select>
+    <div class="cx-grid" style="margin-top:10px">
+      <div class="cx-field"><label>Total Kcal estimadas</label>
+        <input class="cx-input" data-key="r24TotalKcal" type="number" step="1" min="0" placeholder="0"/>
       </div>
-      <div class="cx-field"><label>Alcohol — frecuencia</label><input class="cx-input" data-key="alcohol_frec" type="text"/></div>
-      <div class="cx-field"><label>Alcohol — cantidad</label><input class="cx-input" data-key="alcohol_cant" type="text"/></div>
-      <div class="cx-field"></div>
-      <div class="cx-field"><label>Tabaco — ¿consume?</label>
-        <select class="cx-select" data-key="tabaco"><option value="">—</option><option value="no">No</option><option value="si">Sí</option></select>
-      </div>
-      <div class="cx-field"><label>Tabaco — frecuencia</label><input class="cx-input" data-key="tabaco_frec" type="text"/></div>
-      <div class="cx-field"><label>Tabaco — cantidad</label><input class="cx-input" data-key="tabaco_cant" type="text"/></div>
-      <div class="cx-field"></div>
-      <div class="cx-field"><label>Drogas / otras sustancias — ¿consume?</label>
-        <select class="cx-select" data-key="drogas"><option value="">—</option><option value="no">No</option><option value="si">Sí</option></select>
-      </div>
-      <div class="cx-field"><label>Drogas — frecuencia</label><input class="cx-input" data-key="drogas_frec" type="text"/></div>
-      <div class="cx-field"><label>Drogas — cantidad</label><input class="cx-input" data-key="drogas_cant" type="text"/></div>
       <div class="cx-field"></div>
     </div>
   </div>
 
-  <!-- ANAMNESIS ALIMENTARIA -->
+  <!-- OBSERVACIONES CLÍNICAS -->
   <div class="cx-section">
-    <div class="cx-sec-title">🍽️ Anamnesis alimentaria</div>
+    <div class="cx-sec-title">📝 Observaciones y recomendaciones clínicas</div>
     <div class="cx-grid">
-      <div class="cx-field cx-full"><label>Tipo de alimentación (omnívoro, vegetariano, vegano, etc.)</label><input class="cx-input" data-key="tipoAlimentacion" type="text"/></div>
-      <div class="cx-field cx-full"><label>Alergias o intolerancias</label><textarea class="cx-textarea" data-key="alergias"></textarea></div>
-      <div class="cx-field cx-full"><label>Rechazo alimentario (alimentos que no le gustan)</label><textarea class="cx-textarea" data-key="rechazo"></textarea></div>
-      <div class="cx-field cx-full"><label>Alimentos que le causan distensión / hinchazón</label><textarea class="cx-textarea" data-key="distension"></textarea></div>
-      <div class="cx-field"><label>Apetito general</label>
-        <select class="cx-select" data-key="apetito">
-          <option value="">—</option>
-          <option>Bajo</option><option>Normal</option><option>Bueno</option>
-          <option>Muy bueno</option><option>Excesivo</option>
-        </select>
-      </div>
-      <div class="cx-field"><label>¿Cuándo siente más hambre?</label><input class="cx-input" data-key="horarioApetito" type="text"/></div>
-      <div class="cx-field"><label>Tiempos de comida al día</label><input class="cx-input" data-key="tiemposComida" type="text"/></div>
-      <div class="cx-field"><label>¿Dónde come habitualmente?</label><input class="cx-input" data-key="dondecome" type="text"/></div>
-      <div class="cx-field"><label>¿Quién compra los alimentos?</label><input class="cx-input" data-key="quienCompra" type="text"/></div>
-      <div class="cx-field"><label>¿Quién cocina en casa?</label><input class="cx-input" data-key="quienCocina" type="text"/></div>
-    </div>
-  </div>
-
-  <!-- ACTIVIDAD FÍSICA -->
-  <div class="cx-section">
-    <div class="cx-sec-title">🏃 Actividad física</div>
-    <div class="cx-grid">
-      <div class="cx-field cx-full"><label>¿Qué deporte o actividad física realiza?</label><input class="cx-input" data-key="deporte" type="text"/></div>
-      <div class="cx-field"><label>Frecuencia semanal</label><input class="cx-input" data-key="frecuenciaEjercicio" type="text"/></div>
-      <div class="cx-field"><label>Duración por sesión</label><input class="cx-input" data-key="duracionEjercicio" type="text"/></div>
-      <div class="cx-field"><label>¿Cuánto camina al día?</label><input class="cx-input" data-key="caminata" type="text"/></div>
-      <div class="cx-field"><label>¿Hace cuánto realiza ejercicio?</label><input class="cx-input" data-key="tiempoEjercicio" type="text"/></div>
-      <div class="cx-field cx-full"><label>¿Tiene implementos en casa?</label><input class="cx-input" data-key="implementos" type="text"/></div>
-      <div class="cx-field cx-full"><label>Plan de ejercicio / pretende comenzar</label><input class="cx-input" data-key="planEjercicio" type="text"/></div>
-    </div>
-  </div>
-
-  <!-- SALUD DIGESTIVA -->
-  <div class="cx-section">
-    <div class="cx-sec-title">💧 Salud digestiva e hidratación</div>
-    <div class="cx-grid">
-      <div class="cx-field"><label>Frecuencia de evacuación</label><input class="cx-input" data-key="frecuenciaEvacuacion" type="text" placeholder="Ej: 1 vez al día"/></div>
-      <div class="cx-field"><label>Tipo de heces (Escala Bristol 1-7)</label>
-        <select class="cx-select" data-key="tipoBristol">
-          <option value="">—</option>
-          <option value="1">1 — Muy duras (estreñimiento severo)</option>
-          <option value="2">2 — Duras y grumosas</option>
-          <option value="3">3 — Con grietas en la superficie</option>
-          <option value="4">4 — Suaves y lisas (normal)</option>
-          <option value="5">5 — Blandas con bordes definidos</option>
-          <option value="6">6 — Blandas sin forma definida</option>
-          <option value="7">7 — Líquidas (diarrea)</option>
-        </select>
-      </div>
-      <div class="cx-field"><label>¿Consume laxante?</label>
-        <select class="cx-select" data-key="laxante"><option value="">—</option><option value="no">No</option><option value="si">Sí</option></select>
-      </div>
-      <div class="cx-field"><label>Color de orina habitual</label>
-        <select class="cx-select" data-key="colorOrina">
-          <option value="">—</option>
-          <option>1 — Muy clara / transparente</option>
-          <option>2 — Amarillo muy pálido</option>
-          <option>3 — Amarillo pálido (óptimo)</option>
-          <option>4 — Amarillo (hidratación normal)</option>
-          <option>5 — Amarillo oscuro</option>
-          <option>6 — Ámbar / naranja</option>
-          <option>7 — Marrón (deshidratación severa)</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- MEDIDAS ANTROPOMÉTRICAS -->
-  <div class="cx-section">
-    <div class="cx-sec-title">⚖️ Medidas antropométricas</div>
-    <div class="cx-grid">
-      <div class="cx-field"><label>Peso actual (kg)</label><input class="cx-input" data-key="pesoActual" type="number" step="0.1" min="0" oninput="calcIMC()"/></div>
-      <div class="cx-field"><label>Peso habitual (kg)</label><input class="cx-input" data-key="pesoHabitual" type="number" step="0.1" min="0"/></div>
-      <div class="cx-field"><label>Estatura (cm)</label><input class="cx-input" data-key="estatura" type="number" step="0.1" min="0" oninput="calcIMC()"/></div>
-      <div class="cx-field"><label>% Grasa corporal (si disponible)</label><input class="cx-input" data-key="porcGrasa" type="number" step="0.1" min="0" max="100"/></div>
       <div class="cx-field cx-full">
-        <label>IMC calculado</label>
-        <div class="imc-badge" id="cfIMC">— Ingresa peso y estatura</div>
+        <label>Observaciones del profesional</label>
+        <textarea class="cx-textarea" data-key="notasClinicas" style="min-height:120px"
+          placeholder="Observaciones, plan nutricional, metas, alertas (sal, comidas nocturnas, hidratación, ejercicio…)"></textarea>
       </div>
-    </div>
-  </div>
-
-  <!-- PREGUNTAS CONSULTA -->
-  <div class="cx-section">
-    <div class="cx-sec-title">💬 Preguntas del paciente para la consulta</div>
-    <div class="cx-field">
-      <textarea class="cx-textarea" data-key="preguntas" style="min-height:80px"></textarea>
-    </div>
-  </div>
-
-  <!-- NOTAS CLÍNICAS -->
-  <div class="cx-section">
-    <div class="cx-sec-title">📝 Notas clínicas (uso interno)</div>
-    <div class="cx-field">
-      <textarea class="cx-textarea" data-key="notasClinicas" style="min-height:120px" placeholder="Observaciones, plan nutricional, metas, notas de seguimiento…"></textarea>
     </div>
   </div>
 
@@ -1395,7 +1254,7 @@ async function openExpediente() {
 
   const paciente = $('mName').textContent || 'Paciente';
   $('cxHdrTitle').textContent = paciente;
-  $('cxHdrSub').textContent   = 'Expediente clínico · historial de consultas';
+  $('cxHdrSub').textContent   = 'R24/FR Consumo · historial de registros';
   $('cxSaveBtn').style.display = 'none';
   $('cxBg').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -1412,16 +1271,16 @@ async function loadHistory() {
 
 function renderHistory(list) {
   $('cxSaveBtn').style.display = 'none';
-  $('cxHdrSub').textContent    = 'Expediente clínico · historial de consultas';
+  $('cxHdrSub').textContent    = 'R24/FR Consumo · historial de registros';
 
   let html = `
     <div class="exp-header">
-      <div class="exp-title">📋 Consultas registradas</div>
-      <button class="btn-new-consulta" onclick="openConsultaForm(null,false)">➕ Nueva consulta</button>
+      <div class="exp-title">📋 Registros R24/FR Consumo</div>
+      <button class="btn-new-consulta" onclick="openConsultaForm(null,false)">➕ Nuevo registro</button>
     </div>`;
 
   if (!list.length) {
-    html += '<div class="exp-empty">Aún no hay consultas registradas para este paciente.<br/>Haz clic en <strong>Nueva consulta</strong> para crear la primera.</div>';
+    html += '<div class="exp-empty">Aún no hay registros para este paciente.<br/>Haz clic en <strong>Nuevo registro</strong> para crear el primero.</div>';
   } else {
     list.forEach(c => {
       const edited = c.fecha_edicion !== c.fecha_creacion
@@ -1456,15 +1315,16 @@ async function openConsultaForm(consultaId, readOnly) {
   $('cxBody').innerHTML = '';
   $('cxBody').appendChild(node);
 
-  // Build diseases table
-  buildEnfTable();
+  // Build food frequency table and R24 table
+  buildConsumoTable();
+  buildR24Table();
 
   // Header sub + save button
   $('cxSaveBtn').style.display = readOnly ? 'none' : 'inline-flex';
 
   if (consultaId) {
     // Load existing
-    $('cxHdrSub').textContent = readOnly ? 'Modo lectura' : 'Editando consulta';
+    $('cxHdrSub').textContent = readOnly ? 'Modo lectura' : 'Editando registro';
     $('cxBody').classList.toggle('cx-readonly', readOnly);
     const r = await fetch(`/api/consultas/${consultaId}`).then(x => x.json()).catch(() => null);
     if (r && r.success) {
@@ -1472,25 +1332,55 @@ async function openConsultaForm(consultaId, readOnly) {
       $('cfTitulo').value = r.consulta.titulo || '';
     }
   } else {
-    $('cxHdrSub').textContent = 'Nueva consulta';
+    $('cxHdrSub').textContent = 'Nuevo registro';
     $('cxBody').classList.remove('cx-readonly');
     $('cfTitulo').value = '';
   }
 }
 
-/* ── Build diseases table rows ── */
-function buildEnfTable() {
-  const tbody = document.getElementById('cfEnfTbody');
+/* ── Build food frequency table (Encuesta de tendencia de consumo) ── */
+const CONSUMO_LIST = [
+  'Pan','Frutas','Verduras','Lácteos (¿cuáles?)','Avena','Legumbres',
+  'Carnes rojas','Carnes blancas','Pescado','Huevo','Embutidos',
+  'Frituras','Comida chatarra','Azúcar','Milo o chocolates',
+  'Dulces o golosinas','Bebidas','Jugos néctar','Mantequilla',
+  'Mermelada','Frutos secos','Agua','Repostería','Queso',
+  'Quesillo','Café / Té','Miel','Alcohol','Otro'
+];
+
+function buildConsumoTable() {
+  const tbody = document.getElementById('cfConsumoTbody');
   if (!tbody) return;
-  tbody.innerHTML = ENF_LIST.map(enf => {
-    const key = 'enf_' + enf.replace(/\s+/g,'_').toLowerCase();
+  tbody.innerHTML = CONSUMO_LIST.map((alimento, i) => {
+    const k = 'c_' + i;
     return `
       <tr>
-        <td>${esc(enf)}</td>
-        <td><input type="radio" name="${key}" value="si" data-key="${key}"/></td>
-        <td><input type="radio" name="${key}" value="no" data-key="${key}"/></td>
-        <td><input type="radio" name="${key}" value="familiar" data-key="${key}"/></td>
-        <td><input class="cx-input" style="padding:4px 8px;font-size:.8rem" data-key="${key}_obs" type="text" placeholder="Cuál…"/></td>
+        <td style="font-weight:600;color:#2A3A4A">${esc(alimento)}</td>
+        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_frec" type="text" placeholder="Ej: diario, 3x/sem…"/></td>
+        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_cant" type="text" placeholder="Ej: 2 tazas…"/></td>
+        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_obs"  type="text" placeholder="…"/></td>
+      </tr>`;
+  }).join('');
+}
+
+/* ── Build R24 table (Recordatorio 24 horas) ── */
+const R24_TIEMPOS = [
+  'Desayuno','Media mañana','Almuerzo','Once / Merienda',
+  'Cena','Post-cena','Otro'
+];
+
+function buildR24Table() {
+  const tbody = document.getElementById('cfR24Tbody');
+  if (!tbody) return;
+  tbody.innerHTML = R24_TIEMPOS.map((tiempo, i) => {
+    const k = 'r24_' + i;
+    return `
+      <tr>
+        <td style="font-weight:600;color:#2A3A4A">${esc(tiempo)}</td>
+        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_hora" type="time"/></td>
+        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_prep" type="text" placeholder="Alimentos y preparación…"/></td>
+        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_obs"  type="text" placeholder="Observaciones…"/></td>
+        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem;text-align:right" data-key="${k}_kcal" type="number" step="1" min="0" placeholder="0"/></td>
       </tr>`;
   }).join('');
 }
