@@ -975,6 +975,11 @@
   }
   .nt-card:hover{border-color:#C0A8E8;background:#FAF7FE}
   .nt-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .nt-card-titulo{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.05rem;font-weight:700;color:#3A1A5A;
+    margin-bottom:4px;
+  }
   .nt-card-fecha{
     font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
     color:#5A3090;flex-shrink:0;margin-top:2px;
@@ -1027,6 +1032,14 @@
       <!-- Form panel (hidden by default) -->
       <div class="nt-form" id="ntForm" style="display:none">
         <div class="nt-form-title" id="ntFormTitle">Nueva nota</div>
+        <!-- Título -->
+        <div class="nt-field" style="margin-bottom:10px">
+          <label>Título de la nota</label>
+          <input class="nt-input" id="ntTitulo" type="text"
+            placeholder="Ej: Control semana 2, WhatsApp del lunes, Examen enviado…"
+            maxlength="200" style="width:100%"/>
+        </div>
+        <!-- Fecha -->
         <div class="nt-row">
           <div class="nt-field">
             <label>Fecha</label>
@@ -1034,7 +1047,7 @@
           </div>
         </div>
         <div class="nt-field" style="margin-top:10px">
-          <label>Nota / observación</label>
+          <label>Contenido / observación</label>
           <textarea class="nt-textarea" id="ntTexto"
             placeholder="Ej: Me mandó una foto de su comida. Comentó que tuvo síntomas. Envió examen por WhatsApp…"></textarea>
         </div>
@@ -2266,17 +2279,27 @@ function renderNotas(list) {
     return;
   }
   $('ntList').innerHTML = list.map(n => {
+    const titulo = n.titulo || 'Nota sin título';
     const tieneArchivo = !!n.archivo_nombre;
     const isImg = tieneArchivo && (n.archivo_mime || '').startsWith('image/');
     const archivoHTML = tieneArchivo
       ? `<a class="nt-card-file" href="/api/notas/${n.id}/archivo" target="_blank">${isImg ? '🖼️' : '📎'} ${esc(n.archivo_nombre)}</a>`
       : '';
     return `
-      <div class="nt-card" id="ntcard-${n.id}">
+      <div class="nt-card" id="ntcard-${n.id}"
+           data-id="${n.id}"
+           data-fecha="${esc(n.fecha)}"
+           data-titulo="${esc(titulo)}"
+           data-archivo="${esc(n.archivo_nombre||'')}">
         <div class="nt-card-top">
-          <div class="nt-card-fecha">📌 ${fmtFecha(n.fecha)}</div>
+          <div>
+            <div class="nt-card-titulo">${esc(titulo)}</div>
+            <div class="nt-card-fecha">📌 ${fmtFecha(n.fecha)}
+              ${n.editada ? '<span style="font-size:.72rem;opacity:.7"> · editada ' + esc(n.editada) + '</span>' : ''}
+            </div>
+          </div>
           <div class="nt-card-actions">
-            <button class="nt-act-btn edit" onclick="editNota(${n.id},'${esc(n.fecha)}',${JSON.stringify(esc(n.texto))},'${esc(n.archivo_nombre||'')}')">✏️ Editar</button>
+            <button class="nt-act-btn edit" onclick="editNota(${n.id})">✏️ Editar</button>
             <button class="nt-act-btn del"  onclick="deleteNota(${n.id})">🗑 Eliminar</button>
           </div>
         </div>
@@ -2286,25 +2309,38 @@ function renderNotas(list) {
   }).join('');
 }
 
-/* ── Abrir el formulario (nueva o editar) ── */
+/* ── Abrir el formulario (nueva) ── */
 function openNotaForm(id) {
-  ntEditingId   = id;   // null = nueva
+  ntEditingId   = null;
   ntHasExisting = false;
   $('ntForm').style.display = 'block';
-  $('ntFormTitle').textContent = id ? 'Editar nota' : 'Nueva nota';
+  $('ntFormTitle').textContent = 'Nueva nota';
+  $('ntTitulo').value  = '';
   $('ntFecha').value   = todayISO();
   $('ntTexto').value   = '';
   clearNtFile();
   $('ntAddBtn').style.display = 'none';
   $('ntForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $('ntTitulo').focus();
 }
 
-/* Prefill form when editing */
-function editNota(id, fecha, texto, archivoNombre) {
-  ntEditingId   = id;
+/* ── Editar nota existente: carga datos de la tarjeta ── */
+async function editNota(id) {
+  ntEditingId = id;
+  /* Leer datos del card (guardados en data-attributes) */
+  const card = document.getElementById('ntcard-' + id);
+  if (!card) return;
+  const fecha         = card.dataset.fecha   || todayISO();
+  const tituloCard    = card.dataset.titulo  || '';
+  const archivoNombre = card.dataset.archivo || '';
+  /* Leer texto directamente de la API para evitar corrupción por escaping */
+  const json = await fetch(`/api/notas/${id}`).then(r => r.json()).catch(() => null);
+  const texto = (json && json.nota) ? json.nota.texto : (card.querySelector('.nt-card-body')?.textContent || '');
+
   ntHasExisting = !!archivoNombre;
   $('ntForm').style.display = 'block';
   $('ntFormTitle').textContent = 'Editar nota';
+  $('ntTitulo').value = tituloCard === 'Nota sin título' ? '' : tituloCard;
   $('ntFecha').value  = fecha;
   $('ntTexto').value  = texto;
   if (archivoNombre) {
@@ -2315,12 +2351,15 @@ function editNota(id, fecha, texto, archivoNombre) {
   }
   $('ntAddBtn').style.display = 'none';
   $('ntForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $('ntTitulo').focus();
 }
 
 function cancelNotaForm() {
   $('ntForm').style.display = 'none';
   $('ntAddBtn').style.display = 'inline-flex';
   ntEditingId = null;
+  $('ntTitulo').value = '';
+  $('ntTexto').value  = '';
   clearNtFile();
 }
 
@@ -2333,8 +2372,9 @@ function clearNtFile() {
 
 /* ── Guardar nota (POST o PUT) ── */
 async function saveNota() {
-  const fecha = $('ntFecha').value || todayISO();
-  const texto = $('ntTexto').value.trim();
+  const titulo = ($('ntTitulo').value || '').trim();
+  const fecha  = $('ntFecha').value  || todayISO();
+  const texto  = $('ntTexto').value.trim();
   if (!texto) {
     $('ntTexto').focus();
     $('ntTexto').style.borderColor = '#C96848';
@@ -2348,6 +2388,7 @@ async function saveNota() {
 
   try {
     const fd = new FormData();
+    fd.append('titulo', titulo);
     fd.append('fecha', fecha);
     fd.append('texto', texto);
 

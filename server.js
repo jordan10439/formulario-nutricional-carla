@@ -115,6 +115,7 @@ async function initDB() {
       id              SERIAL PRIMARY KEY,
       submission_id   INTEGER REFERENCES submissions(id) ON DELETE CASCADE,
       fecha           DATE        NOT NULL DEFAULT CURRENT_DATE,
+      titulo          VARCHAR(200) NOT NULL DEFAULT '',
       texto           TEXT        NOT NULL,
       archivo_nombre  VARCHAR(255),
       archivo_mime    VARCHAR(100),
@@ -124,6 +125,8 @@ async function initDB() {
       updated_at      TIMESTAMPTZ DEFAULT NOW()
     );
     CREATE INDEX IF NOT EXISTS idx_notas_submission ON notas_seguimiento(submission_id);
+    /* Migrate: add titulo column if missing (safe for existing DBs) */
+    ALTER TABLE notas_seguimiento ADD COLUMN IF NOT EXISTS titulo VARCHAR(200) NOT NULL DEFAULT '';
   `);
 }
 
@@ -530,7 +533,9 @@ app.get('/api/submissions/:id/notas', requireAdmin, async (req, res) => {
     const { id } = req.params;
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
     const r = await getPool().query(`
-      SELECT id, fecha, texto, archivo_nombre, archivo_mime, archivo_size,
+      SELECT id, fecha,
+             CASE WHEN titulo IS NULL OR titulo = '' THEN 'Nota sin título' ELSE titulo END AS titulo,
+             texto, archivo_nombre, archivo_mime, archivo_size,
              to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS creada,
              to_char(updated_at  AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS editada
       FROM notas_seguimiento
@@ -548,15 +553,16 @@ app.post('/api/submissions/:id/notas', requireAdmin, uploadNota.single('archivo'
   try {
     const { id } = req.params;
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
-    const fecha = req.body.fecha || new Date().toISOString().slice(0,10);
-    const texto = (req.body.texto || '').trim();
+    const fecha  = req.body.fecha  || new Date().toISOString().slice(0,10);
+    const titulo = (req.body.titulo || '').trim().slice(0, 200);
+    const texto  = (req.body.texto  || '').trim();
     if (!texto) return res.status(400).json({ success: false, message: 'El texto es requerido.' });
     const f = req.file;
     const r = await getPool().query(
       `INSERT INTO notas_seguimiento
-         (submission_id, fecha, texto, archivo_nombre, archivo_mime, archivo_size, archivo_data)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
-      [id, fecha, texto,
+         (submission_id, fecha, titulo, texto, archivo_nombre, archivo_mime, archivo_size, archivo_data)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+      [id, fecha, titulo, texto,
        f ? f.originalname : null,
        f ? f.mimetype     : null,
        f ? f.size         : null,
@@ -590,25 +596,26 @@ app.put('/api/notas/:id', requireAdmin, uploadNota.single('archivo'), async (req
   try {
     const { id } = req.params;
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
-    const fecha = req.body.fecha || new Date().toISOString().slice(0,10);
-    const texto = (req.body.texto || '').trim();
+    const fecha  = req.body.fecha  || new Date().toISOString().slice(0,10);
+    const titulo = (req.body.titulo || '').trim().slice(0, 200);
+    const texto  = (req.body.texto  || '').trim();
     if (!texto) return res.status(400).json({ success: false, message: 'El texto es requerido.' });
     const f = req.file;
     if (f) {
       await getPool().query(
         `UPDATE notas_seguimiento
-         SET fecha=$1, texto=$2, archivo_nombre=$3, archivo_mime=$4, archivo_size=$5, archivo_data=$6, updated_at=NOW()
-         WHERE id=$7`,
-        [fecha, texto, f.originalname, f.mimetype, f.size, f.buffer, id]);
+         SET fecha=$1, titulo=$2, texto=$3, archivo_nombre=$4, archivo_mime=$5, archivo_size=$6, archivo_data=$7, updated_at=NOW()
+         WHERE id=$8`,
+        [fecha, titulo, texto, f.originalname, f.mimetype, f.size, f.buffer, id]);
     } else if (req.body.borrarArchivo === '1') {
       await getPool().query(
         `UPDATE notas_seguimiento
-         SET fecha=$1, texto=$2, archivo_nombre=NULL, archivo_mime=NULL, archivo_size=NULL, archivo_data=NULL, updated_at=NOW()
-         WHERE id=$3`, [fecha, texto, id]);
+         SET fecha=$1, titulo=$2, texto=$3, archivo_nombre=NULL, archivo_mime=NULL, archivo_size=NULL, archivo_data=NULL, updated_at=NOW()
+         WHERE id=$4`, [fecha, titulo, texto, id]);
     } else {
       await getPool().query(
-        `UPDATE notas_seguimiento SET fecha=$1, texto=$2, updated_at=NOW() WHERE id=$3`,
-        [fecha, texto, id]);
+        `UPDATE notas_seguimiento SET fecha=$1, titulo=$2, texto=$3, updated_at=NOW() WHERE id=$4`,
+        [fecha, titulo, texto, id]);
     }
     res.json({ success: true });
   } catch (err) {
