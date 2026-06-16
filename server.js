@@ -378,8 +378,7 @@ app.put('/api/submissions/:id/data', requireAdmin, async (req, res) => {
            nombre   = COALESCE($2, nombre),
            apellido = COALESCE($3, apellido),
            email    = COALESCE($4, email),
-           telefono = COALESCE($5, telefono),
-           updated_at = NOW()
+           telefono = COALESCE($5, telefono)
        WHERE id = $6`,
       [
         JSON.stringify(merged),

@@ -279,11 +279,11 @@
 
   /* Modal header */
   .modal-hdr{
-    padding:28px 32px 22px;
-    border-bottom:1px solid rgba(180,150,130,.16);
+    padding:22px 32px 16px;
+    border-bottom:none;
     background:linear-gradient(135deg,#FDFAF6,#FDF5F0);
     border-radius:22px 22px 0 0;
-    display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
   }
   .mhdr-left .m-name{
     font-family:'Cormorant Garamond',serif;
@@ -304,8 +304,16 @@
   .mbtn.close{
     width:34px;height:34px;border-radius:50%;padding:0;justify-content:center;
     border-color:rgba(180,150,130,.28);color:#8A6A58;background:transparent;font-size:1rem;
+    flex-shrink:0;
   }
   .mbtn.close:hover{background:#FDF5F0;border-color:#C96848;color:#C96848}
+  /* Fila inferior de botones del modal */
+  .mhdr-actions{
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+    padding:0 32px 18px;
+    border-bottom:1px solid rgba(180,150,130,.16);
+    background:linear-gradient(135deg,#FDFAF6,#FDF5F0);
+  }
 
   /* Modal body */
   .modal-body{padding:28px 32px 36px}
@@ -399,8 +407,10 @@
     .clinic-grid{grid-template-columns:1fr}
     .cf.full{grid-column:1}
     .cf:last-child{border-bottom:none}
-    .modal-hdr{flex-direction:column;gap:14px}
-    .mhdr-right{width:100%;justify-content:flex-end}
+    .modal-hdr{flex-direction:column;gap:10px;padding:18px 18px 14px}
+    .mhdr-right{flex-shrink:0}
+    .mhdr-actions{padding:0 18px 14px;gap:5px}
+    .mhdr-actions .mbtn{font-size:.72rem;padding:6px 10px}
     .modal-body{padding:20px 18px}
     .cx-grid{grid-template-columns:1fr!important}
     .cx-full{grid-column:1!important}
@@ -625,6 +635,23 @@
   }
   .cx-readonly .cx-titulo-input{pointer-events:none;border-color:transparent}
   .cx-readonly .enf-table input[type=radio]{pointer-events:none}
+  /* Botón agregar fila (oculto en lectura) */
+  .cx-add-row-btn{
+    margin-top:8px;padding:6px 16px;border-radius:8px;border:1.5px dashed rgba(26,74,138,.35);
+    background:transparent;color:#1A4A8A;font-size:.8rem;font-weight:700;
+    font-family:'DM Sans',sans-serif;cursor:pointer;transition:.2s;
+  }
+  .cx-add-row-btn:hover{background:rgba(26,74,138,.07);border-style:solid}
+  /* Botón eliminar fila por fila */
+  .cx-del-row{
+    background:none;border:none;cursor:pointer;color:#C96848;font-size:1rem;
+    padding:2px 6px;border-radius:6px;line-height:1;
+  }
+  .cx-del-row:hover{background:#FDF5F0}
+  /* El encabezado extra y los botones de fila se ocultan en modo lectura */
+  .cx-readonly .cx-edit-only{display:none!important}
+  .cx-readonly .cx-del-row{display:none!important}
+  .cx-readonly .cx-add-row-btn{display:none!important}
   </style>
 </head>
 <body>
@@ -718,14 +745,18 @@
         <div class="m-name" id="mName">—</div>
         <div class="m-meta" id="mMeta">—</div>
       </div>
+      <!-- Fila de sistema: PDF y cerrar -->  
       <div class="mhdr-right">
-        <button class="mbtn expediente" onclick="openExpediente()">📋 R24/FR Consumo</button>
-        <button class="mbtn notas" onclick="openNotas()">📝 Notas</button>
-        <button class="mbtn edit-ficha" id="btnEditFicha" onclick="toggleEditFicha()">✏️ Editar ficha</button>
-        <button class="mbtn review" id="btnRev" onclick="toggleReview()">✓ Marcar revisada</button>
-        <button class="mbtn print" onclick="window.print()">🖨 PDF</button>
-        <button class="mbtn close" onclick="closeModal()">✕</button>
+        <button class="mbtn print" onclick="window.print()" title="Imprimir / guardar PDF">🖨 PDF</button>
+        <button class="mbtn close" onclick="closeModal()" title="Cerrar">✕</button>
       </div>
+    </div>
+    <!-- Fila de acciones funcionales -->
+    <div class="mhdr-actions">
+      <button class="mbtn expediente" onclick="openExpediente()">📋 R24/FR</button>
+      <button class="mbtn notas" onclick="openNotas()">📝 Notas</button>
+      <button class="mbtn edit-ficha" id="btnEditFicha" onclick="toggleEditFicha()">✏️ Editar ficha</button>
+      <button class="mbtn review" id="btnRev" onclick="toggleReview()">✓ Marcar revisada</button>
     </div>
 
     <div class="modal-body" id="mBody">
@@ -788,15 +819,19 @@
     <table class="enf-table" style="min-width:560px">
       <thead>
         <tr>
-          <th style="width:34%">Alimento</th>
+          <th style="width:30%">Alimento</th>
           <th>Frecuencia</th>
           <th>Cantidad</th>
-          <th style="width:28%">Observación</th>
+          <th style="width:26%">Observación</th>
+          <th class="cx-edit-only" style="width:36px"></th>
         </tr>
       </thead>
       <tbody id="cfConsumoTbody"></tbody>
     </table>
     </div>
+    <button class="cx-add-row-btn cx-edit-only" onclick="addConsumoFila()">
+      + Agregar alimento
+    </button>
   </div>
 
   <!-- RECORDATORIO 24 HORAS -->
@@ -806,16 +841,20 @@
     <table class="enf-table" style="min-width:600px">
       <thead>
         <tr>
-          <th style="width:20%">Tiempo de comida</th>
-          <th style="width:12%">Hora</th>
+          <th style="width:18%">Tiempo de comida</th>
+          <th style="width:11%">Hora</th>
           <th>Preparación / alimentos</th>
-          <th style="width:22%">Observaciones</th>
-          <th style="width:10%">Kcal</th>
+          <th style="width:20%">Observaciones</th>
+          <th style="width:9%">Kcal</th>
+          <th class="cx-edit-only" style="width:36px"></th>
         </tr>
       </thead>
       <tbody id="cfR24Tbody"></tbody>
     </table>
     </div>
+    <button class="cx-add-row-btn cx-edit-only" onclick="addR24Fila()">
+      + Agregar tiempo
+    </button>
     <div class="cx-grid" style="margin-top:10px">
       <div class="cx-field"><label>Total Kcal estimadas</label>
         <input class="cx-input" data-key="r24TotalKcal" type="number" step="1" min="0" placeholder="0"/>
@@ -1944,7 +1983,7 @@ async function openConsultaForm(consultaId, readOnly) {
 }
 
 /* ── Build food frequency table (Encuesta de tendencia de consumo) ── */
-const CONSUMO_LIST = [
+const CONSUMO_DEFAULT = [
   'Pan','Frutas','Verduras','Lácteos (¿cuáles?)','Avena','Legumbres',
   'Carnes rojas','Carnes blancas','Pescado','Huevo','Embutidos',
   'Frituras','Comida chatarra','Azúcar','Milo o chocolates',
@@ -1953,46 +1992,90 @@ const CONSUMO_LIST = [
   'Quesillo','Café / Té','Miel','Alcohol','Otro'
 ];
 
-function buildConsumoTable() {
+function _consumoRowHTML(nombre, idx) {
+  const k = 'c_' + idx;
+  return `<tr data-ctype="consumo" data-idx="${idx}">
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem;width:100%" data-key="${k}_nombre" type="text" value="${esc(nombre||'')}"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_frec" type="text" placeholder="Ej: diario, 3x/sem…"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_cant" type="text" placeholder="Ej: 2 tazas…"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_obs"  type="text" placeholder="…"/></td>
+    <td class="cx-edit-only" style="text-align:center">
+      <button class="cx-del-row" title="Eliminar fila" onclick="this.closest('tr').remove()">✕</button>
+    </td>
+  </tr>`;
+}
+
+function buildConsumoTable(rows) {
   const tbody = document.getElementById('cfConsumoTbody');
   if (!tbody) return;
-  tbody.innerHTML = CONSUMO_LIST.map((alimento, i) => {
-    const k = 'c_' + i;
-    return `
-      <tr>
-        <td style="font-weight:600;color:#2A3A4A">${esc(alimento)}</td>
-        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_frec" type="text" placeholder="Ej: diario, 3x/sem…"/></td>
-        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_cant" type="text" placeholder="Ej: 2 tazas…"/></td>
-        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_obs"  type="text" placeholder="…"/></td>
-      </tr>`;
+  const list = (rows && rows.length) ? rows : CONSUMO_DEFAULT;
+  tbody.innerHTML = list.map((item, i) => {
+    const nombre = typeof item === 'object' ? (item.nombre || '') : item;
+    return _consumoRowHTML(nombre, i);
   }).join('');
 }
 
+function addConsumoFila() {
+  const tbody = document.getElementById('cfConsumoTbody');
+  if (!tbody) return;
+  const idx = tbody.querySelectorAll('tr').length;
+  tbody.insertAdjacentHTML('beforeend', _consumoRowHTML('', idx));
+  tbody.querySelector(`tr:last-child input`).focus();
+}
+
 /* ── Build R24 table (Recordatorio 24 horas) ── */
-const R24_TIEMPOS = [
+const R24_DEFAULT = [
   'Desayuno','Media mañana','Almuerzo','Once / Merienda',
   'Cena','Post-cena','Otro'
 ];
 
-function buildR24Table() {
+function _r24RowHTML(nombre, idx) {
+  const k = 'r24_' + idx;
+  return `<tr data-ctype="r24" data-idx="${idx}">
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem;width:100%" data-key="${k}_nombre" type="text" value="${esc(nombre||'')}"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_hora" type="time"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_prep" type="text" placeholder="Alimentos y preparación…"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_obs"  type="text" placeholder="Observaciones…"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem;text-align:right" data-key="${k}_kcal" type="number" step="1" min="0" placeholder="0"/></td>
+    <td class="cx-edit-only" style="text-align:center">
+      <button class="cx-del-row" title="Eliminar fila" onclick="this.closest('tr').remove()">✕</button>
+    </td>
+  </tr>`;
+}
+
+function buildR24Table(rows) {
   const tbody = document.getElementById('cfR24Tbody');
   if (!tbody) return;
-  tbody.innerHTML = R24_TIEMPOS.map((tiempo, i) => {
-    const k = 'r24_' + i;
-    return `
-      <tr>
-        <td style="font-weight:600;color:#2A3A4A">${esc(tiempo)}</td>
-        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_hora" type="time"/></td>
-        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_prep" type="text" placeholder="Alimentos y preparación…"/></td>
-        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_obs"  type="text" placeholder="Observaciones…"/></td>
-        <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem;text-align:right" data-key="${k}_kcal" type="number" step="1" min="0" placeholder="0"/></td>
-      </tr>`;
+  const list = (rows && rows.length) ? rows : R24_DEFAULT;
+  tbody.innerHTML = list.map((item, i) => {
+    const nombre = typeof item === 'object' ? (item.nombre || '') : item;
+    return _r24RowHTML(nombre, i);
   }).join('');
+}
+
+function addR24Fila() {
+  const tbody = document.getElementById('cfR24Tbody');
+  if (!tbody) return;
+  const idx = tbody.querySelectorAll('tr').length;
+  tbody.insertAdjacentHTML('beforeend', _r24RowHTML('', idx));
+  tbody.querySelector(`tr:last-child input`).focus();
 }
 
 /* ── Fill form from data object ── */
 function fillForm(data) {
-  // Text/select/textarea
+  /* Restaurar filas dinámicas ANTES de poblar data-key */
+  if (data._consumo_rows && data._consumo_rows.length) {
+    buildConsumoTable(data._consumo_rows);
+  } else {
+    buildConsumoTable();
+  }
+  if (data._r24_rows && data._r24_rows.length) {
+    buildR24Table(data._r24_rows);
+  } else {
+    buildR24Table();
+  }
+
+  // Text/select/textarea con data-key
   document.querySelectorAll('#cxBody [data-key]').forEach(el => {
     const key = el.dataset.key;
     const val = data[key];
@@ -2018,6 +2101,22 @@ function fillForm(data) {
 /* ── Read form into data object ── */
 function readForm() {
   const data = {};
+
+  /* Guardar estructura de filas dinámicas */
+  const consumoRows = [];
+  document.querySelectorAll('#cfConsumoTbody tr').forEach(tr => {
+    const nombreEl = tr.querySelector('[data-key$="_nombre"]');
+    consumoRows.push({ nombre: nombreEl ? nombreEl.value : '' });
+  });
+  data._consumo_rows = consumoRows;
+
+  const r24Rows = [];
+  document.querySelectorAll('#cfR24Tbody tr').forEach(tr => {
+    const nombreEl = tr.querySelector('[data-key$="_nombre"]');
+    r24Rows.push({ nombre: nombreEl ? nombreEl.value : '' });
+  });
+  data._r24_rows = r24Rows;
+
   // All inputs / selects / textareas with data-key
   document.querySelectorAll('#cxBody [data-key]').forEach(el => {
     const key = el.dataset.key;
