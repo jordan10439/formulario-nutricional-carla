@@ -356,6 +356,46 @@ app.delete('/api/submissions/:id', requireAdmin, async (req, res) => {
   }
 });
 
+/* PUT /api/submissions/:id/data — editar datos de la ficha desde el admin */
+app.put('/api/submissions/:id/data', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ success: false });
+    const newData = req.body;
+    if (!newData || typeof newData !== 'object')
+      return res.status(400).json({ success: false, message: 'Datos inválidos.' });
+
+    /* Merge: get current data, then overwrite with new keys */
+    const cur = await getPool().query('SELECT data FROM submissions WHERE id=$1', [id]);
+    if (!cur.rows.length) return res.status(404).json({ success: false });
+    const merged = Object.assign({}, cur.rows[0].data || {}, newData);
+
+    /* Also sync top-level columns if present */
+    await getPool().query(
+      `UPDATE submissions
+       SET data     = $1,
+           nombre   = COALESCE($2, nombre),
+           apellido = COALESCE($3, apellido),
+           email    = COALESCE($4, email),
+           telefono = COALESCE($5, telefono),
+           updated_at = NOW()
+       WHERE id = $6`,
+      [
+        JSON.stringify(merged),
+        merged.nombre   || null,
+        merged.apellido || null,
+        merged.email    || null,
+        merged.telefono || null,
+        id
+      ]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.get('/api/stats', requireAdmin, async (req, res) => {
   if (!dbReady) return res.json({ success: true, stats: { total: 0, sin_revisar: 0, hoy: 0, semana: 0 } });
   try {

@@ -419,6 +419,60 @@
     border-color:rgba(100,60,160,.3);color:#5A3090;background:transparent;
   }
   .mbtn.notas:hover{background:#5A3090;color:#fff;border-color:#5A3090}
+  .mbtn.edit-ficha{
+    border-color:rgba(45,155,90,.35);color:#1A7A45;background:transparent;
+  }
+  .mbtn.edit-ficha:hover{background:#1A7A45;color:#fff;border-color:#1A7A45}
+  .mbtn.edit-ficha.active-edit{background:#1A7A45;color:#fff;border-color:#1A7A45}
+
+  /* ── Panel edición de ficha (dentro del modal de paciente) ── */
+  .edit-ficha-panel{
+    background:#F4FAF6;border:1.5px solid rgba(45,155,90,.25);
+    border-radius:16px;padding:24px 26px;margin-bottom:20px;
+  }
+  .edit-ficha-banner{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:10px;margin-bottom:20px;
+  }
+  .edit-ficha-banner-title{
+    font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;
+    color:#0E5A2A;
+  }
+  .edit-ficha-banner-sub{font-size:.75rem;color:#4A8A60;margin-top:2px}
+  .ef-section-title{
+    font-size:.68rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
+    color:#1A7A45;margin:18px 0 10px;
+    border-bottom:1px solid rgba(45,155,90,.2);padding-bottom:6px;
+  }
+  .ef-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 16px}
+  .ef-field{display:flex;flex-direction:column;gap:3px}
+  .ef-field.full{grid-column:1/-1}
+  .ef-label{
+    font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4A8A60;
+  }
+  .ef-input,.ef-select,.ef-textarea{
+    padding:8px 11px;
+    border:1.5px solid rgba(45,155,90,.25);border-radius:8px;
+    font-family:'DM Sans',sans-serif;font-size:.88rem;color:#1C2C1E;
+    background:#fff;outline:none;transition:.2s;
+  }
+  .ef-input:focus,.ef-select:focus,.ef-textarea:focus{
+    border-color:#1A7A45;box-shadow:0 0 0 3px rgba(45,155,90,.12);
+  }
+  .ef-textarea{min-height:72px;resize:vertical}
+  .ef-save-btn{
+    padding:10px 24px;border-radius:10px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#2A9D5C,#1A7A45);color:#fff;
+    font-weight:700;font-family:'DM Sans',sans-serif;font-size:.88rem;
+    box-shadow:0 4px 14px rgba(45,155,90,.28);transition:.2s;
+  }
+  .ef-save-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(45,155,90,.38)}
+  .ef-cancel-btn{
+    padding:10px 18px;border-radius:10px;cursor:pointer;
+    background:transparent;border:1.5px solid rgba(180,160,120,.35);
+    color:#5A4A2A;font-weight:700;font-family:'DM Sans',sans-serif;font-size:.88rem;transition:.2s;
+  }
+  .ef-cancel-btn:hover{background:#FDF5F0;color:#C96848;border-color:#C96848}
 
   /* Sección expediente dentro del modal de ficha */
   .exp-section{
@@ -667,6 +721,7 @@
       <div class="mhdr-right">
         <button class="mbtn expediente" onclick="openExpediente()">📋 R24/FR Consumo</button>
         <button class="mbtn notas" onclick="openNotas()">📝 Notas</button>
+        <button class="mbtn edit-ficha" id="btnEditFicha" onclick="toggleEditFicha()">✏️ Editar ficha</button>
         <button class="mbtn review" id="btnRev" onclick="toggleReview()">✓ Marcar revisada</button>
         <button class="mbtn print" onclick="window.print()">🖨 PDF</button>
         <button class="mbtn close" onclick="closeModal()">✕</button>
@@ -1461,8 +1516,271 @@ function clinicHTML(d) {
     </div>`;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   EDITAR FICHA DEL PACIENTE
+   ══════════════════════════════════════════════════════════════ */
+
+let _editFichaActive = false;   // estado del toggle
+let _editFichaData   = {};      // snapshot de datos al abrir edición
+
+function toggleEditFicha() {
+  const btn = $('btnEditFicha');
+  if (_editFichaActive) {
+    /* Cancelar → volver a la vista de lectura */
+    _editFichaActive = false;
+    btn.classList.remove('active-edit');
+    btn.textContent = '✏️ Editar ficha';
+    /* Quita el panel de edición si existe */
+    const panel = document.getElementById('editFichaPanel');
+    if (panel) panel.remove();
+  } else {
+    /* Activar → insertar el panel editable encima del contenido */
+    _editFichaActive = true;
+    btn.classList.add('active-edit');
+    btn.textContent = '✕ Cancelar edición';
+    _openEditPanel();
+  }
+}
+
+function _openEditPanel() {
+  /* Lee los datos actuales desde el DOM de clínica (ya renderizado) */
+  /* Más fiable: cargamos de nuevo de la API para tener los datos frescos */
+  if (!curId) return;
+  fetch(`/api/submissions/${curId}`)
+    .then(r => r.json())
+    .then(json => {
+      if (!json.success) return;
+      _editFichaData = json.submission.data || {};
+      const d = _editFichaData;
+
+      /* Construye el panel de edición */
+      const panel = document.createElement('div');
+      panel.id = 'editFichaPanel';
+      panel.className = 'edit-ficha-panel';
+      panel.innerHTML = `
+        <div class="edit-ficha-banner">
+          <div>
+            <div class="edit-ficha-banner-title">✏️ Editar datos de la ficha</div>
+            <div class="edit-ficha-banner-sub">Los cambios reemplazan la información guardada. No afecta el formulario público.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="ef-save-btn" id="efSaveBtn" onclick="saveEditFicha()">💾 Guardar cambios</button>
+            <button class="ef-cancel-btn" onclick="toggleEditFicha()">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- DATOS PERSONALES -->
+        <div class="ef-section-title">👤 Datos personales</div>
+        <div class="ef-grid">
+          ${efField('Nombre',            'ef_nombre',          d.nombre)}
+          ${efField('Apellido',          'ef_apellido',        d.apellido)}
+          ${efField('Edad',              'ef_edad',            d.edad,           'number')}
+          ${efField('Fecha nacimiento',  'ef_fechaNacimiento', d.fechaNacimiento,'date')}
+          ${efField('Email',             'ef_email',           d.email,          'email')}
+          ${efField('Teléfono',          'ef_telefono',        d.telefono)}
+          ${efField('Ciudad / Comuna',   'ef_comuna',          d.comuna)}
+          ${efField('Estado civil',      'ef_estadoCivil',     d.estadoCivil)}
+          ${efField('Nacionalidad',      'ef_nacionalidad',    d.nacionalidad)}
+          ${efField('Ocupación',         'ef_ocupacion',       d.ocupacion,      'text', true)}
+        </div>
+
+        <!-- MOTIVO Y OBJETIVOS -->
+        <div class="ef-section-title">🎯 Motivo de consulta</div>
+        <div class="ef-grid">
+          ${efArea('Motivación para consultar', 'ef_motivacion',   d.motivacion,   true)}
+          ${efArea('Objetivo principal',         'ef_objetivo',     d.objetivo,     true)}
+          ${efField('¿Cirugía previa?',          'ef_tieneCirugia', d.tieneCirugia)}
+          ${efField('¿Cuál cirugía?',            'ef_cirugia',      d.cirugia)}
+          ${efArea('Dieta previa',               'ef_dietaPrevia',  d.dietaPrevia,  true)}
+          ${efField('¿Enfermedad diagnosticada?','ef_tieneEnfermedad', d.tieneEnfermedad)}
+          ${efField('¿Cuál enfermedad?',         'ef_cualEnfermedad',  d.cualEnfermedad, 'text', true)}
+        </div>
+
+        <!-- MEDICAMENTOS Y SUPLEMENTOS -->
+        <div class="ef-section-title">💊 Medicamentos y suplementos</div>
+        <div class="ef-grid">
+          ${efField('¿Consume medicamentos?', 'ef_tieneMed',      d.tieneMed)}
+          ${efField('Medicamento — ¿cuál/es?','ef_medNombre',     d.medNombre, 'text', true)}
+          ${efField('Medicamento — frecuencia','ef_medFrecuencia', d.medFrecuencia)}
+          ${efField('Medicamento — dosis',     'ef_medDosis',      d.medDosis)}
+          ${efField('Medicamento — motivo',    'ef_medMotivo',     d.medMotivo, 'text', true)}
+
+          ${efField('¿Consume suplementos?',  'ef_tieneSup',      d.tieneSup)}
+          ${efField('Suplemento — ¿cuál/es?', 'ef_supNombre',     d.supNombre, 'text', true)}
+          ${efField('Suplemento — frecuencia','ef_supFrecuencia',  d.supFrecuencia)}
+          ${efField('Suplemento — marca',     'ef_supMarca',      d.supMarca)}
+
+          ${efField('¿Suplementos deportivos?','ef_tieneSupDep',   d.tieneSupDep)}
+          ${efField('Sup. dep. — ¿cuál/es?',  'ef_supDepNombre',  d.supDepNombre, 'text', true)}
+          ${efField('Sup. dep. — frecuencia', 'ef_supDepFrecuencia', d.supDepFrecuencia)}
+          ${efField('Sup. dep. — marca',      'ef_supDepMarca',   d.supDepMarca)}
+        </div>
+
+        <!-- HÁBITOS -->
+        <div class="ef-section-title">🍷 Hábitos</div>
+        <div class="ef-grid">
+          ${efField('Alcohol',            'ef_alcohol',       d.alcohol)}
+          ${efField('Alcohol — frecuencia','ef_alcohol_frec', d.alcohol_frec)}
+          ${efField('Alcohol — cantidad', 'ef_alcohol_cant',  d.alcohol_cant)}
+          ${efField('Tabaco',             'ef_tabaco',        d.tabaco)}
+          ${efField('Tabaco — frecuencia','ef_tabaco_frec',   d.tabaco_frec)}
+          ${efField('Tabaco — cantidad',  'ef_tabaco_cant',   d.tabaco_cant)}
+          ${efField('Otras sustancias',   'ef_drogas',        d.drogas)}
+          ${efField('Sustancias — frec.', 'ef_drogas_frec',   d.drogas_frec)}
+          ${efField('Sustancias — cant.', 'ef_drogas_cant',   d.drogas_cant)}
+        </div>
+
+        <!-- ALIMENTACIÓN -->
+        <div class="ef-section-title">🍽️ Alimentación</div>
+        <div class="ef-grid">
+          ${efField('Tipo de alimentación',       'ef_tipoAlimentacion', d.tipoAlimentacion, 'text', true)}
+          ${efArea('Alergias / intolerancias',    'ef_alergias',   d.alergias,   true)}
+          ${efArea('Alimentos que rechaza',       'ef_rechazo',    d.rechazo,    true)}
+          ${efArea('Alimentos que causan hinchazón','ef_distension',d.distension, true)}
+          ${efField('Apetito general',            'ef_apetito',    d.apetito)}
+          ${efField('¿Cuándo siente más hambre?', 'ef_horarioApetito', d.horarioApetito)}
+          ${efField('Comidas al día',             'ef_tiemposComida', d.tiemposComida)}
+          ${efField('¿Dónde come habitualmente?', 'ef_dondecome',  d.dondecome)}
+          ${efField('¿Quién compra?',             'ef_quienCompra',d.quienCompra)}
+          ${efField('¿Quién cocina?',             'ef_quienCocina',d.quienCocina)}
+        </div>
+
+        <!-- SALUD DIGESTIVA -->
+        <div class="ef-section-title">💧 Salud digestiva e hidratación</div>
+        <div class="ef-grid">
+          ${efField('Frecuencia de evacuación',   'ef_frecuenciaEvacuacion', d.frecuenciaEvacuacion)}
+          ${efField('¿Usa laxante?',              'ef_laxante',    d.laxante)}
+          ${efField('Color de orina habitual',    'ef_colorOrina', d.colorOrina, 'text', true)}
+        </div>
+
+        <!-- ACTIVIDAD FÍSICA -->
+        <div class="ef-section-title">🏃 Actividad física</div>
+        <div class="ef-grid">
+          ${efField('Deporte / actividad',        'ef_deporte',          d.deporte, 'text', true)}
+          ${efField('Frecuencia semanal',         'ef_frecuenciaEjercicio', d.frecuenciaEjercicio)}
+          ${efField('Duración por sesión',        'ef_duracionEjercicio',d.duracionEjercicio)}
+          ${efField('Caminata diaria',            'ef_caminata',         d.caminata)}
+          ${efField('¿Hace cuánto hace ejercicio?','ef_tiempoEjercicio', d.tiempoEjercicio)}
+          ${efField('Implementos en casa',        'ef_implementos',      d.implementos)}
+          ${efField('Plan de ejercicio',          'ef_planEjercicio',    d.planEjercicio, 'text', true)}
+        </div>
+
+        <!-- MEDIDAS -->
+        <div class="ef-section-title">⚖️ Medidas antropométricas</div>
+        <div class="ef-grid">
+          ${efField('Peso actual (kg)',   'ef_pesoActual',  d.pesoActual,  'number')}
+          ${efField('Peso habitual (kg)','ef_pesoHabitual',d.pesoHabitual,'number')}
+          ${efField('Estatura (cm)',     'ef_estatura',    d.estatura,    'number')}
+        </div>
+
+        <!-- PREGUNTAS -->
+        <div class="ef-section-title">💬 Preguntas para la consulta</div>
+        <div class="ef-grid">
+          ${efArea('Preguntas / temas a tratar', 'ef_preguntas', d.preguntas, true)}
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap">
+          <button class="ef-save-btn" onclick="saveEditFicha()">💾 Guardar cambios</button>
+          <button class="ef-cancel-btn" onclick="toggleEditFicha()">Cancelar</button>
+        </div>`;
+
+      /* Insertar al inicio del mBody */
+      const mBody = $('mBody');
+      mBody.prepend(panel);
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    })
+    .catch(() => alert('No se pudo cargar la ficha para editar.'));
+}
+
+/* Genera un campo de texto editable */
+function efField(label, id, val, type, full) {
+  return `<div class="ef-field${full?' full':''}">
+    <div class="ef-label">${esc(label)}</div>
+    <input class="ef-input" id="${id}" type="${type||'text'}" value="${esc(val||'')}"/>
+  </div>`;
+}
+/* Genera un textarea editable */
+function efArea(label, id, val, full) {
+  return `<div class="ef-field${full?' full':''}">
+    <div class="ef-label">${esc(label)}</div>
+    <textarea class="ef-textarea" id="${id}">${esc(val||'')}</textarea>
+  </div>`;
+}
+
+/* Recoge todos los campos y guarda */
+async function saveEditFicha() {
+  if (!curId) return;
+  const btn = $('efSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+  /* Map input id → data key */
+  const fieldMap = {
+    ef_nombre:'nombre',ef_apellido:'apellido',ef_edad:'edad',
+    ef_fechaNacimiento:'fechaNacimiento',ef_email:'email',ef_telefono:'telefono',
+    ef_comuna:'comuna',ef_estadoCivil:'estadoCivil',ef_nacionalidad:'nacionalidad',
+    ef_ocupacion:'ocupacion',ef_motivacion:'motivacion',ef_objetivo:'objetivo',
+    ef_tieneCirugia:'tieneCirugia',ef_cirugia:'cirugia',ef_dietaPrevia:'dietaPrevia',
+    ef_tieneEnfermedad:'tieneEnfermedad',ef_cualEnfermedad:'cualEnfermedad',
+    ef_tieneMed:'tieneMed',ef_medNombre:'medNombre',ef_medFrecuencia:'medFrecuencia',
+    ef_medDosis:'medDosis',ef_medMotivo:'medMotivo',
+    ef_tieneSup:'tieneSup',ef_supNombre:'supNombre',ef_supFrecuencia:'supFrecuencia',
+    ef_supMarca:'supMarca',ef_tieneSupDep:'tieneSupDep',ef_supDepNombre:'supDepNombre',
+    ef_supDepFrecuencia:'supDepFrecuencia',ef_supDepMarca:'supDepMarca',
+    ef_alcohol:'alcohol',ef_alcohol_frec:'alcohol_frec',ef_alcohol_cant:'alcohol_cant',
+    ef_tabaco:'tabaco',ef_tabaco_frec:'tabaco_frec',ef_tabaco_cant:'tabaco_cant',
+    ef_drogas:'drogas',ef_drogas_frec:'drogas_frec',ef_drogas_cant:'drogas_cant',
+    ef_tipoAlimentacion:'tipoAlimentacion',ef_alergias:'alergias',ef_rechazo:'rechazo',
+    ef_distension:'distension',ef_apetito:'apetito',ef_horarioApetito:'horarioApetito',
+    ef_tiemposComida:'tiemposComida',ef_dondecome:'dondecome',
+    ef_quienCompra:'quienCompra',ef_quienCocina:'quienCocina',
+    ef_frecuenciaEvacuacion:'frecuenciaEvacuacion',ef_laxante:'laxante',
+    ef_colorOrina:'colorOrina',ef_deporte:'deporte',
+    ef_frecuenciaEjercicio:'frecuenciaEjercicio',ef_duracionEjercicio:'duracionEjercicio',
+    ef_caminata:'caminata',ef_tiempoEjercicio:'tiempoEjercicio',
+    ef_implementos:'implementos',ef_planEjercicio:'planEjercicio',
+    ef_pesoActual:'pesoActual',ef_pesoHabitual:'pesoHabitual',ef_estatura:'estatura',
+    ef_preguntas:'preguntas'
+  };
+
+  const payload = {};
+  for (const [elId, key] of Object.entries(fieldMap)) {
+    const el = document.getElementById(elId);
+    if (el) payload[key] = el.value;
+  }
+
+  try {
+    const r = await fetch(`/api/submissions/${curId}/data`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(x => x.json());
+
+    if (!r.success) throw new Error(r.message || 'Error al guardar');
+
+    /* Actualiza el nombre en la lista de tarjetas */
+    const s = all.find(x => x.id === curId);
+    if (s) {
+      s.nombre   = payload.nombre   || s.nombre;
+      s.apellido = payload.apellido || s.apellido;
+      s.email    = payload.email    || s.email;
+      s.telefono = payload.telefono || s.telefono;
+    }
+
+    /* Desactiva modo edición y recarga el modal */
+    _editFichaActive = false;
+    const btnEF = $('btnEditFicha');
+    if (btnEF) { btnEF.classList.remove('active-edit'); btnEF.textContent = '✏️ Editar ficha'; }
+    await openModal(curId);
+
+  } catch (err) {
+    alert('❌ No se pudo guardar: ' + err.message);
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar cambios'; }
+  }
+}
+
 /* ─── EXPORT CSV ─── */
 function exportCSV() {
+
   if (!filtered.length) { alert('No hay fichas visibles para exportar.'); return; }
   const h = ['ID','Nombre','Apellido','Email','Teléfono','Fecha','Revisada'];
   const r = filtered.map(s => [s.id, s.nombre||'', s.apellido||'', s.email||'', s.telefono||'', s.fecha||'', isReviewed(s)?'Sí':'No']);
