@@ -131,6 +131,39 @@ async function initDB() {
     /* Migrate: add titulo column if missing (safe for existing DBs) */
     ALTER TABLE notas_seguimiento ADD COLUMN IF NOT EXISTS titulo VARCHAR(200) NOT NULL DEFAULT '';
   `);
+  /* Plantillas globales de formularios */
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS form_templates (
+      id         SERIAL PRIMARY KEY,
+      tipo       VARCHAR(50) UNIQUE NOT NULL,
+      data       JSONB NOT NULL DEFAULT '{}',
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    /* Seed template de seguimiento si no existe */
+    INSERT INTO form_templates (tipo, data)
+    VALUES ('seguimiento', '{
+      "preguntas": [
+        {"label": "¿Cómo te fue en general desde el último control?"},
+        {"label": "¿Qué lograste mantener y qué fue lo que más te costó?"},
+        {"label": "¿Cómo estuvo tu hambre, ansiedad o picoteo durante este periodo?"},
+        {"label": "¿Cómo estuvo tu consumo de agua, proteínas, frutas y verduras?"},
+        {"label": "¿Notaste algún cambio o molestia en tu digestión, energía, sueño o cuerpo?"},
+        {"label": "¿Hubo alguna situación que dificultó seguir la pauta?"},
+        {"label": "¿Qué parte de la pauta sentiste difícil de sostener?"},
+        {"label": "¿Qué te gustaría mantener, cambiar o mejorar para el próximo control?"},
+        {"label": "¿Qué objetivo concreto podemos dejar para esta próxima semana o mes?"}
+      ],
+      "r24_rows": [
+        {"nombre": "Desayuno"},
+        {"nombre": "Media mañana"},
+        {"nombre": "Almuerzo"},
+        {"nombre": "Once / Merienda"},
+        {"nombre": "Cena"},
+        {"nombre": "Post-cena"}
+      ]
+    }'::jsonb)
+    ON CONFLICT (tipo) DO NOTHING;
+  `);
 }
 
 /* ── MULTER (memory storage, max 8 MB per file, 5 files) ──────── */
@@ -168,6 +201,44 @@ function requireAdmin(req, res, next) {
   }
   res.redirect('/admin/login');
 }
+
+/* ================================================================
+   TEMPLATES API
+   ================================================================ */
+
+/* GET /api/templates/:tipo — obtener plantilla global */
+app.get('/api/templates/:tipo', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { tipo } = req.params;
+    const r = await getPool().query(
+      'SELECT data FROM form_templates WHERE tipo=$1', [tipo]);
+    if (!r.rows.length) return res.status(404).json({ success: false });
+    res.json({ success: true, template: r.rows[0].data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* PUT /api/templates/:tipo — guardar plantilla global */
+app.put('/api/templates/:tipo', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const { tipo } = req.params;
+    const data = req.body;
+    if (!data || typeof data !== 'object')
+      return res.status(400).json({ success: false, message: 'Datos inválidos' });
+    await getPool().query(
+      `INSERT INTO form_templates (tipo, data, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (tipo) DO UPDATE SET data=$2, updated_at=NOW()`,
+      [tipo, JSON.stringify(data)]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 /* ================================================================
    PUBLIC API

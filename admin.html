@@ -1715,25 +1715,12 @@ function clinicHTML(d) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   FICHA DE SEGUIMIENTO / CONTROL
+   FICHA DE SEGUIMIENTO / CONTROL — SISTEMA DE PLANTILLA GLOBAL
    ══════════════════════════════════════════════════════════════ */
 
-/* Preguntas por defecto — editables en el formulario */
-const SG_PREGUNTAS_DEFAULT = [
-  '¿Cómo te fue en general desde el último control?',
-  '¿Qué lograste mantener y qué fue lo que más te costó?',
-  '¿Cómo estuvo tu hambre, ansiedad o picoteo durante este periodo?',
-  '¿Cómo estuvo tu consumo de agua, proteínas, frutas y verduras?',
-  '¿Notaste algún cambio o molestia en tu digestión, energía, sueño o cuerpo?',
-  '¿Hubo alguna situación que dificultó seguir la pauta?',
-  '¿Qué parte de la pauta sentiste difícil de sostener?',
-  '¿Qué te gustaría mantener, cambiar o mejorar para el próximo control?',
-  '¿Qué objetivo concreto podemos dejar para esta próxima semana o mes?'
-];
-
-let sgSubmissionId  = null;
-let sgConsultaId    = null;   // null = nueva, número = editando
-let sgReadOnly      = false;
+let sgSubmissionId = null;
+let sgConsultaId   = null;
+let sgReadOnly     = false;
 
 /* ── Abre el modal (reutiliza cxBg) en modo seguimiento ── */
 async function openSeguimiento() {
@@ -1760,8 +1747,13 @@ function sgRenderHistory(list) {
   $('cxSaveBtn').style.display = 'none';
   $('cxBody').classList.remove('cx-readonly');
 
-  const addBtn = `<button class="cxbtn save" style="display:inline-flex;margin-bottom:20px"
-    onclick="openSgForm(null,false)">+ Nueva ficha de seguimiento</button>`;
+  const addBtn = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="cxbtn save" style="display:inline-flex"
+        onclick="openSgForm(null,false)">+ Nueva ficha de seguimiento</button>
+      <button class="cxbtn" style="display:inline-flex;border-color:rgba(0,130,120,.4);color:#006B63"
+        onclick="sgEditTemplate()">⚙️ Editar plantilla global</button>
+    </div>`;
 
   if (!list.length) {
     $('cxBody').innerHTML = addBtn +
@@ -1797,7 +1789,7 @@ async function openSgForm(consultaId, readOnly) {
   $('cxHdrSub').textContent = readOnly ? 'Modo lectura' : (consultaId ? 'Editando control' : 'Nuevo control');
   $('cxSaveBtn').style.display = readOnly ? 'none' : 'inline-flex';
 
-  /* Clonar el template */
+  /* Clonar el template HTML */
   const tmpl = document.getElementById('sgFormTemplate');
   const clone = tmpl.content.cloneNode(true);
   $('cxBody').innerHTML = '';
@@ -1808,41 +1800,155 @@ async function openSgForm(consultaId, readOnly) {
   const fechaEl = document.getElementById('sgFecha');
   if (fechaEl) fechaEl.value = todayISO();
 
-  /* Construir preguntas y R24 en blanco primero */
-  sgBuildPreguntas([]);
-  sgBuildR24([]);
-  sgSetupIMC();
-
-  /* Botón volver en header */
   $('cxSaveBtn').onclick = saveSeguimiento;
 
-  /* Cargar datos si es edición */
   if (consultaId) {
+    /* ══ FORMULARIO EXISTENTE: usar SIEMPRE los datos guardados del paciente ══
+       La plantilla global NO toca esto — los datos ya guardados son sagrados. */
     const r = await fetch(`/api/consultas/${consultaId}`).then(x => x.json()).catch(() => null);
     if (r && r.success) {
       sgFillForm(r.consulta.data || {}, r.consulta.titulo || '');
     }
   } else {
-    /* Nuevo: auto-numerar */
-    const r2 = await fetch(`/api/submissions/${sgSubmissionId}/consultas?tipo=seguimiento`)
-      .then(x => x.json()).catch(() => ({ consultas: [] }));
-    const n = (r2.consultas || []).length + 1;
+    /* ══ FORMULARIO NUEVO: cargar plantilla global como base ══ */
+    const [tmplRes, histRes] = await Promise.all([
+      fetch('/api/templates/seguimiento').then(x => x.json()).catch(() => null),
+      fetch(`/api/submissions/${sgSubmissionId}/consultas?tipo=seguimiento`).then(x => x.json()).catch(() => ({ consultas: [] }))
+    ]);
+    const plantilla = (tmplRes && tmplRes.success) ? tmplRes.template : null;
+    const n = (histRes.consultas || []).length + 1;
     const tituloEl = document.getElementById('sgTitulo');
     if (tituloEl) tituloEl.value = `Control ${n}`;
+
+    if (plantilla) {
+      sgBuildPreguntas((plantilla.preguntas || []).map(p => ({ label: p.label, respuesta: '' })));
+      sgBuildR24(plantilla.r24_rows || []);
+    } else {
+      sgBuildPreguntas([]);
+      sgBuildR24([]);
+    }
+    sgSetupIMC();
   }
 }
 
-/* ── Construir lista de preguntas ── */
-function sgBuildPreguntas(savedPreguntas) {
+/* ══ EDITOR DE PLANTILLA GLOBAL ══
+   Los cambios aquí afectan SOLO formularios nuevos.
+   Los datos ya guardados de pacientes no se tocan nunca. */
+async function sgEditTemplate() {
+  $('cxHdrSub').textContent = 'Editando plantilla global';
+  $('cxSaveBtn').style.display = 'none';
+  $('cxBody').classList.remove('cx-readonly');
+
+  $('cxBody').innerHTML = '<div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>';
+
+  const r = await fetch('/api/templates/seguimiento').then(x => x.json()).catch(() => null);
+  const tmpl = (r && r.success) ? r.template : { preguntas: [], r24_rows: [] };
+
+  $('cxBody').innerHTML = `
+    <div style="background:#EAF9F7;border:1.5px solid rgba(0,130,120,.3);border-radius:12px;padding:14px 16px;margin-bottom:18px;font-size:.82rem;color:#005550">
+      <strong>¿Cómo funciona la plantilla?</strong><br>
+      • Los cambios aquí se aplican a los <u>próximos formularios nuevos</u> de <u>todos los pacientes</u>.<br>
+      • Si agregás "Colación 2" → aparece en el R24 de todo nuevo control que abras.<br>
+      • Si lo eliminás → no aparece en nuevos controles.<br>
+      • Los datos <strong>ya guardados</strong> de un paciente <strong>nunca se modifican</strong>.
+    </div>
+
+    <div style="background:#F4FFFE;border:1.5px solid rgba(0,130,120,.2);border-radius:14px;padding:18px 20px;margin-bottom:16px">
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#006B63;margin-bottom:12px">
+        💬 Preguntas de control
+      </div>
+      <div id="tplQuestionList"></div>
+      <button class="cx-add-row-btn" style="margin-top:8px" onclick="tplAddPregunta()">+ Agregar pregunta</button>
+    </div>
+
+    <div style="background:#F4FFFE;border:1.5px solid rgba(0,130,120,.2);border-radius:14px;padding:18px 20px;margin-bottom:20px">
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#006B63;margin-bottom:12px">
+        ⏱️ Tiempos del Recordatorio 24 hrs
+      </div>
+      <div id="tplR24List"></div>
+      <button class="cx-add-row-btn" style="margin-top:8px" onclick="tplAddR24()">+ Agregar tiempo de comida</button>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="cxbtn save" id="tplSaveBtn" style="display:inline-flex" onclick="tplSave()">💾 Guardar plantilla</button>
+      <button class="cxbtn" onclick="openSeguimiento()">↩ Volver al historial</button>
+    </div>`;
+
+  (tmpl.preguntas || []).forEach(p => tplAddPreguntaItem(p.label));
+  (tmpl.r24_rows  || []).forEach(row => tplAddR24Item(row.nombre));
+}
+
+function tplAddPreguntaItem(label) {
+  const list = document.getElementById('tplQuestionList');
+  if (!list) return;
+  const n = list.children.length + 1;
+  const div = document.createElement('div');
+  div.className = 'sg-question-item';
+  div.style.cssText = 'flex-direction:row;align-items:center;gap:8px';
+  div.innerHTML = `
+    <span style="font-size:.75rem;font-weight:700;color:#006B63;opacity:.55;flex-shrink:0;min-width:18px">${n}.</span>
+    <input type="text" class="cx-input tpl-pregunta-input" value="${esc(label||'')}"
+      placeholder="Texto de la pregunta…"
+      style="flex:1;padding:6px 10px;font-size:.85rem"/>
+    <button class="cx-del-row" title="Eliminar" onclick="this.closest('.sg-question-item').remove()">✕</button>`;
+  list.appendChild(div);
+}
+
+function tplAddPregunta() {
+  tplAddPreguntaItem('');
+  document.querySelector('#tplQuestionList .sg-question-item:last-child input')?.focus();
+}
+
+function tplAddR24Item(nombre) {
+  const list = document.getElementById('tplR24List');
+  if (!list) return;
+  const div = document.createElement('div');
+  div.className = 'sg-question-item';
+  div.style.cssText = 'flex-direction:row;align-items:center;gap:8px';
+  div.innerHTML = `
+    <span style="font-size:.9rem;flex-shrink:0">🍽</span>
+    <input type="text" class="cx-input tpl-r24-input" value="${esc(nombre||'')}"
+      placeholder="Ej: Colación 2, Colación tarde…"
+      style="flex:1;padding:6px 10px;font-size:.85rem"/>
+    <button class="cx-del-row" title="Eliminar" onclick="this.closest('.sg-question-item').remove()">✕</button>`;
+  list.appendChild(div);
+}
+
+function tplAddR24() {
+  tplAddR24Item('');
+  document.querySelector('#tplR24List .sg-question-item:last-child input')?.focus();
+}
+
+async function tplSave() {
+  const preguntas = [...document.querySelectorAll('.tpl-pregunta-input')]
+    .map(el => ({ label: el.value.trim() })).filter(p => p.label);
+  const r24_rows  = [...document.querySelectorAll('.tpl-r24-input')]
+    .map(el => ({ nombre: el.value.trim() })).filter(r => r.nombre);
+
+  const btn = document.getElementById('tplSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+  const res = await fetch('/api/templates/seguimiento', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ preguntas, r24_rows })
+  }).then(x => x.json()).catch(() => ({ success: false }));
+
+  if (res.success) {
+    if (btn) { btn.textContent = '✓ Guardada'; btn.style.background = '#2A9D5C'; }
+    setTimeout(() => openSeguimiento(), 1000);
+  } else {
+    alert('❌ No se pudo guardar la plantilla');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar plantilla'; btn.style.background = ''; }
+  }
+}
+
+/* ── Construir preguntas en el formulario del paciente ── */
+function sgBuildPreguntas(lista) {
   const container = document.getElementById('sgQuestionsList');
   if (!container) return;
-  /* Si hay preguntas guardadas, usarlas; si no, usar defaults */
-  const lista = (savedPreguntas && savedPreguntas.length)
-    ? savedPreguntas
-    : SG_PREGUNTAS_DEFAULT.map(q => ({ label: q, respuesta: '' }));
-
   container.innerHTML = '';
-  lista.forEach((p, i) => sgAddPreguntaItem(container, p.label, p.respuesta, i));
+  lista.forEach((p, i) => sgAddPreguntaItem(container, p.label, p.respuesta || '', i));
 }
 
 function sgAddPreguntaItem(container, label, respuesta, idx) {
@@ -1854,12 +1960,11 @@ function sgAddPreguntaItem(container, label, respuesta, idx) {
       <span style="opacity:.5">${idx+1}.</span>
       <input class="sg-question-edit-lbl" type="text"
         value="${esc(label)}"
-        title="Puedes editar el texto de la pregunta"
+        title="Podés editar el texto para este formulario"
         placeholder="Pregunta personalizada…"/>
     </div>
-    <textarea data-sg-resp="${idx}"
-      placeholder="Respuesta del paciente…">${esc(respuesta)}</textarea>
-    <button class="sg-del-pregunta cx-edit-only" title="Eliminar pregunta"
+    <textarea data-sg-resp="${idx}" placeholder="Respuesta del paciente…">${esc(respuesta)}</textarea>
+    <button class="sg-del-pregunta cx-edit-only" title="Eliminar de este formulario"
       onclick="this.closest('.sg-question-item').remove()">✕</button>`;
   container.appendChild(div);
 }
@@ -1890,11 +1995,7 @@ function _sgR24RowHTML(nombre, idx) {
 function sgBuildR24(rows) {
   const tbody = document.getElementById('sgR24Tbody');
   if (!tbody) return;
-  const list = (rows && rows.length) ? rows : R24_DEFAULT;
-  tbody.innerHTML = list.map((item, i) => {
-    const nombre = typeof item === 'object' ? (item.nombre || '') : item;
-    return _sgR24RowHTML(nombre, i);
-  }).join('');
+  tbody.innerHTML = rows.map((item, i) => _sgR24RowHTML(item.nombre, i)).join('');
 }
 
 function addSgR24Fila() {
@@ -1907,9 +2008,9 @@ function addSgR24Fila() {
 
 /* ── IMC auto para seguimiento ── */
 function sgSetupIMC() {
-  const pesoEl    = document.querySelector('#cxBody [data-key="sgPeso"]');
-  const estatEl   = document.querySelector('#cxBody [data-key="sgEstatura"]');
-  const imcBadge  = document.getElementById('sgIMC');
+  const pesoEl   = document.querySelector('#cxBody [data-key="sgPeso"]');
+  const estatEl  = document.querySelector('#cxBody [data-key="sgEstatura"]');
+  const imcBadge = document.getElementById('sgIMC');
   if (!pesoEl || !estatEl || !imcBadge) return;
   const calc = () => {
     const p = parseFloat(pesoEl.value), e = parseFloat(estatEl.value);
@@ -1920,10 +2021,10 @@ function sgSetupIMC() {
     }
     const h = e / 100, imc = (p / (h*h)).toFixed(1);
     let cat = '', bg = '', col = '';
-    if (imc < 18.5)      { cat='Bajo peso';    bg='#EAF0FA'; col='#1A4A8A'; }
-    else if (imc < 25)   { cat='Normal';        bg='#EAF8EE'; col='#1A7A45'; }
-    else if (imc < 30)   { cat='Sobrepeso';     bg='#FFF8E8'; col='#8A5A00'; }
-    else                 { cat='Obesidad';       bg='#FEF0EE'; col='#C96848'; }
+    if      (imc < 18.5) { cat='Bajo peso'; bg='#EAF0FA'; col='#1A4A8A'; }
+    else if (imc < 25)   { cat='Normal';    bg='#EAF8EE'; col='#1A7A45'; }
+    else if (imc < 30)   { cat='Sobrepeso'; bg='#FFF8E8'; col='#8A5A00'; }
+    else                 { cat='Obesidad';  bg='#FEF0EE'; col='#C96848'; }
     imcBadge.textContent = `IMC ${imc} — ${cat}`;
     imcBadge.style.background = bg; imcBadge.style.color = col;
   };
@@ -1931,12 +2032,17 @@ function sgSetupIMC() {
   estatEl.addEventListener('input', calc);
 }
 
-/* ── Poblar el formulario con datos guardados ── */
+/* ── Poblar formulario con datos guardados del paciente (datos sagrados) ── */
 function sgFillForm(data, titulo) {
   const tituloEl = document.getElementById('sgTitulo');
   if (tituloEl) tituloEl.value = titulo || '';
 
-  /* Campos con data-key simples */
+  /* Construir preguntas y R24 desde los datos guardados */
+  sgBuildPreguntas(data._sg_preguntas && data._sg_preguntas.length ? data._sg_preguntas : []);
+  sgBuildR24(data._sg_r24_rows && data._sg_r24_rows.length ? data._sg_r24_rows : []);
+  sgSetupIMC();
+
+  /* Poblar inputs con data-key */
   document.querySelectorAll('#cxBody [data-key]').forEach(el => {
     const val = data[el.dataset.key];
     if (val !== undefined && val !== null) el.value = val;
