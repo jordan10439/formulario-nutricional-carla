@@ -103,11 +103,14 @@ async function initDB() {
       id            SERIAL PRIMARY KEY,
       submission_id INTEGER REFERENCES submissions(id) ON DELETE CASCADE,
       titulo        VARCHAR(200) NOT NULL DEFAULT 'Consulta',
+      tipo          VARCHAR(30)  NOT NULL DEFAULT 'inicial',
       data          JSONB        NOT NULL DEFAULT '{}',
       created_at    TIMESTAMPTZ  DEFAULT NOW(),
       updated_at    TIMESTAMPTZ  DEFAULT NOW()
     );
     CREATE INDEX IF NOT EXISTS idx_consultas_submission ON consultas(submission_id);
+    /* Migrate: add tipo column if missing */
+    ALTER TABLE consultas ADD COLUMN IF NOT EXISTS tipo VARCHAR(30) NOT NULL DEFAULT 'inicial';
   `);
   /* Notas de seguimiento */
   await db.query(`
@@ -423,13 +426,22 @@ app.get('/api/submissions/:id/consultas', requireAdmin, async (req, res) => {
   if (!dbReady) return res.json({ success: true, consultas: [] });
   try {
     const { id } = req.params;
+    const tipo = req.query.tipo || null;   // 'inicial' | 'seguimiento' | null=todos
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
-    const r = await getPool().query(`
-      SELECT id, titulo,
-             to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_creacion,
-             to_char(updated_at  AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_edicion
-      FROM consultas WHERE submission_id = $1
-      ORDER BY created_at ASC`, [id]);
+    const r = await getPool().query(
+      tipo
+        ? `SELECT id, titulo, tipo,
+                  to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_creacion,
+                  to_char(updated_at  AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_edicion
+           FROM consultas WHERE submission_id = $1 AND tipo = $2
+           ORDER BY created_at ASC`
+        : `SELECT id, titulo, tipo,
+                  to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_creacion,
+                  to_char(updated_at  AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_edicion
+           FROM consultas WHERE submission_id = $1
+           ORDER BY created_at ASC`,
+      tipo ? [id, tipo] : [id]
+    );
     res.json({ success: true, consultas: r.rows });
   } catch (err) {
     res.status(500).json({ success: false });
@@ -442,10 +454,11 @@ app.post('/api/submissions/:id/consultas', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
-    const { titulo = 'Consulta', data = {} } = req.body;
+    const { titulo = 'Consulta', tipo = 'inicial', data = {} } = req.body;
+    const tipoSafe = ['inicial','seguimiento'].includes(tipo) ? tipo : 'inicial';
     const r = await getPool().query(
-      `INSERT INTO consultas (submission_id, titulo, data) VALUES ($1,$2,$3) RETURNING id`,
-      [id, titulo.slice(0,200), JSON.stringify(data)]
+      `INSERT INTO consultas (submission_id, titulo, tipo, data) VALUES ($1,$2,$3,$4) RETURNING id`,
+      [id, titulo.slice(0,200), tipoSafe, JSON.stringify(data)]
     );
     res.json({ success: true, id: r.rows[0].id });
   } catch (err) {
@@ -460,7 +473,7 @@ app.get('/api/consultas/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     if (isNaN(Number(id))) return res.status(400).json({ success: false });
     const r = await getPool().query(
-      `SELECT id, submission_id, titulo, data,
+      `SELECT id, submission_id, titulo, tipo, data,
               to_char(created_at AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_creacion,
               to_char(updated_at  AT TIME ZONE 'America/Santiago','DD/MM/YYYY HH24:MI') AS fecha_edicion
        FROM consultas WHERE id = $1`, [id]);

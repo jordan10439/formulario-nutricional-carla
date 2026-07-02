@@ -429,6 +429,11 @@
     border-color:rgba(100,60,160,.3);color:#5A3090;background:transparent;
   }
   .mbtn.notas:hover{background:#5A3090;color:#fff;border-color:#5A3090}
+  .mbtn.seguimiento{
+    border-color:rgba(0,130,120,.35);color:#006B63;background:transparent;
+  }
+  .mbtn.seguimiento:hover{background:#006B63;color:#fff;border-color:#006B63}
+
   .mbtn.edit-ficha{
     border-color:rgba(45,155,90,.35);color:#1A7A45;background:transparent;
   }
@@ -754,6 +759,7 @@
     <!-- Fila de acciones funcionales -->
     <div class="mhdr-actions">
       <button class="mbtn expediente" onclick="openExpediente()">📋 R24/FR</button>
+      <button class="mbtn seguimiento" onclick="openSeguimiento()">📊 Seguimiento</button>
       <button class="mbtn notas" onclick="openNotas()">📝 Notas</button>
       <button class="mbtn edit-ficha" id="btnEditFicha" onclick="toggleEditFicha()">✏️ Editar ficha</button>
       <button class="mbtn review" id="btnRev" onclick="toggleReview()">✓ Marcar revisada</button>
@@ -877,6 +883,146 @@
 
 </div>
 </template>
+
+<!-- ════════ MODAL SEGUIMIENTO (usa el mismo modal CX, tipo=seguimiento) ════════ -->
+<!-- El modal de seguimiento REUTILIZA cxBg / cxModal.  No necesita HTML propio. -->
+<!-- Template del formulario de seguimiento -->
+<template id="sgFormTemplate">
+<div class="cx-form" id="sgFormInner">
+
+  <!-- TÍTULO Y FECHA -->
+  <div class="cx-section">
+    <div class="cx-grid" style="grid-template-columns:1fr 180px;gap:14px">
+      <div class="cx-field cx-full">
+        <label>Nombre del control</label>
+        <input class="cx-titulo-input" id="sgTitulo" type="text"
+          placeholder="Ej: Control 1, Control 2, Control mensual…" maxlength="200"/>
+      </div>
+      <div class="cx-field">
+        <label>Fecha</label>
+        <input class="cx-input" data-key="sgFecha" id="sgFecha" type="date"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEDIDAS ANTHROPOMÉTRICAS -->
+  <div class="cx-section">
+    <div class="cx-sec-title">⚖️ Medidas del control</div>
+    <div class="cx-grid">
+      <div class="cx-field">
+        <label>Peso actual (kg)</label>
+        <input class="cx-input" data-key="sgPeso" type="number" step="0.1" min="0" placeholder="0.0"/>
+      </div>
+      <div class="cx-field">
+        <label>Estatura (cm)</label>
+        <input class="cx-input" data-key="sgEstatura" type="number" step="0.1" min="0" placeholder="0.0"/>
+      </div>
+      <div class="cx-field">
+        <label>Circunferencia cintura (cm)</label>
+        <input class="cx-input" data-key="sgCintura" type="number" step="0.1" min="0" placeholder="0.0"/>
+      </div>
+      <div class="cx-field">
+        <label>% Grasa corporal</label>
+        <input class="cx-input" data-key="sgGrasa" type="number" step="0.1" min="0" placeholder="0.0"/>
+      </div>
+      <div class="cx-field">
+        <label>IMC calculado</label>
+        <div class="imc-badge" id="sgIMC">— Ingresa peso y estatura</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREGUNTAS DE CONTROL -->
+  <div class="cx-section">
+    <div class="cx-sec-title">💬 Preguntas de control nutricional</div>
+    <div class="sg-questions" id="sgQuestionsList">
+      <!-- renderizado dinámicamente por JS -->
+    </div>
+    <button class="cx-add-row-btn cx-edit-only" style="margin-top:12px" onclick="sgAddPregunta()">
+      + Agregar pregunta personalizada
+    </button>
+  </div>
+
+  <!-- R24 — RECORDATORIO 24 HORAS -->
+  <div class="cx-section">
+    <div class="cx-sec-title">⏱️ Recordatorio de 24 horas (R24)</div>
+    <div style="overflow-x:auto">
+    <table class="enf-table" style="min-width:600px">
+      <thead>
+        <tr>
+          <th style="width:18%">Tiempo de comida</th>
+          <th style="width:11%">Hora</th>
+          <th>Preparación / alimentos</th>
+          <th style="width:20%">Observaciones</th>
+          <th style="width:9%">Kcal</th>
+          <th class="cx-edit-only" style="width:36px"></th>
+        </tr>
+      </thead>
+      <tbody id="sgR24Tbody"></tbody>
+    </table>
+    </div>
+    <button class="cx-add-row-btn cx-edit-only" onclick="addSgR24Fila()">
+      + Agregar tiempo
+    </button>
+    <div class="cx-grid" style="margin-top:10px">
+      <div class="cx-field"><label>Total Kcal estimadas</label>
+        <input class="cx-input" data-key="sgR24TotalKcal" type="number" step="1" min="0" placeholder="0"/>
+      </div>
+      <div class="cx-field"></div>
+    </div>
+  </div>
+
+  <!-- OBSERVACIONES CLÍNICAS -->
+  <div class="cx-section">
+    <div class="cx-sec-title">📝 Observaciones y plan del control</div>
+    <div class="cx-grid">
+      <div class="cx-field cx-full">
+        <label>Plan nutricional / observaciones del profesional</label>
+        <textarea class="cx-textarea" data-key="sgObservaciones" style="min-height:120px"
+          placeholder="Plan acordado, metas para el próximo período, ajustes a la pauta, alertas, etc."></textarea>
+      </div>
+    </div>
+  </div>
+
+</div>
+</template>
+
+<style>
+  /* ══ SEGUIMIENTO — preguntas dinámicas ══ */
+  .sg-question-item{
+    background:#F4FFFE;border:1.5px solid rgba(0,130,120,.18);
+    border-radius:10px;padding:12px 14px;margin-bottom:10px;
+    display:flex;flex-direction:column;gap:6px;
+    position:relative;
+  }
+  .sg-question-label{
+    font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:#006B63;display:flex;align-items:center;gap:6px;
+  }
+  .sg-question-edit-lbl{
+    flex:1;border:none;border-bottom:1.5px dashed rgba(0,130,120,.3);
+    background:transparent;font-size:.7rem;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;color:#006B63;outline:none;padding:0 2px;
+  }
+  .sg-question-edit-lbl:focus{border-bottom-color:#006B63}
+  .sg-question-item textarea{
+    padding:8px 10px;border:1.5px solid rgba(0,130,120,.2);border-radius:8px;
+    font-family:'DM Sans',sans-serif;font-size:.88rem;color:#1C2C1E;
+    background:#fff;outline:none;min-height:68px;resize:vertical;transition:.2s;
+    width:100%;box-sizing:border-box;
+  }
+  .sg-question-item textarea:focus{border-color:#006B63;box-shadow:0 0 0 3px rgba(0,130,120,.1)}
+  .sg-del-pregunta{
+    position:absolute;top:10px;right:10px;
+    background:none;border:none;cursor:pointer;color:#C96848;
+    font-size:.85rem;padding:2px 6px;border-radius:6px;opacity:.7;
+  }
+  .sg-del-pregunta:hover{background:#FDF5F0;opacity:1}
+  /* readonly: oculta label edit y del button */
+  .cx-readonly .sg-question-edit-lbl{pointer-events:none}
+  .cx-readonly .sg-del-pregunta{display:none}
+  .cx-readonly .cx-add-row-btn{display:none}
+</style>
 
 <style>
   /* ══ NOTAS DE SEGUIMIENTO — estilos del modal ══ */
@@ -1566,6 +1712,328 @@ function clinicHTML(d) {
         ${f('Preguntas / temas a tratar', d.preguntas, true)}
       </div>
     </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FICHA DE SEGUIMIENTO / CONTROL
+   ══════════════════════════════════════════════════════════════ */
+
+/* Preguntas por defecto — editables en el formulario */
+const SG_PREGUNTAS_DEFAULT = [
+  '¿Cómo te fue en general desde el último control?',
+  '¿Qué lograste mantener y qué fue lo que más te costó?',
+  '¿Cómo estuvo tu hambre, ansiedad o picoteo durante este periodo?',
+  '¿Cómo estuvo tu consumo de agua, proteínas, frutas y verduras?',
+  '¿Notaste algún cambio o molestia en tu digestión, energía, sueño o cuerpo?',
+  '¿Hubo alguna situación que dificultó seguir la pauta?',
+  '¿Qué parte de la pauta sentiste difícil de sostener?',
+  '¿Qué te gustaría mantener, cambiar o mejorar para el próximo control?',
+  '¿Qué objetivo concreto podemos dejar para esta próxima semana o mes?'
+];
+
+let sgSubmissionId  = null;
+let sgConsultaId    = null;   // null = nueva, número = editando
+let sgReadOnly      = false;
+
+/* ── Abre el modal (reutiliza cxBg) en modo seguimiento ── */
+async function openSeguimiento() {
+  if (!curId) return;
+  sgSubmissionId = curId;
+  sgConsultaId   = null;
+  sgReadOnly     = false;
+
+  $('cxHdrTitle').textContent = $('mName').textContent || 'Paciente';
+  $('cxHdrSub').textContent   = 'Controles de seguimiento · historial';
+  $('cxSaveBtn').style.display = 'none';
+  $('cxBg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  $('cxBody').innerHTML = '<div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>';
+  const r = await fetch(`/api/submissions/${sgSubmissionId}/consultas?tipo=seguimiento`)
+    .then(x => x.json()).catch(() => ({ consultas: [] }));
+  sgRenderHistory(r.consultas || []);
+}
+
+/* ── Historial de seguimientos ── */
+function sgRenderHistory(list) {
+  $('cxHdrSub').textContent = 'Controles de seguimiento · historial';
+  $('cxSaveBtn').style.display = 'none';
+  $('cxBody').classList.remove('cx-readonly');
+
+  const addBtn = `<button class="cxbtn save" style="display:inline-flex;margin-bottom:20px"
+    onclick="openSgForm(null,false)">+ Nueva ficha de seguimiento</button>`;
+
+  if (!list.length) {
+    $('cxBody').innerHTML = addBtn +
+      '<div class="exp-empty">Aún no hay fichas de seguimiento para este paciente.</div>';
+    return;
+  }
+
+  const rows = list.map((c, i) => `
+    <div class="exp-card">
+      <div class="exp-card-left">
+        <div class="cr-titulo">${esc(c.titulo || 'Control ' + (i+1))}</div>
+        <div class="cr-meta">Creado: ${esc(c.fecha_creacion||'—')}
+          ${c.fecha_edicion ? ' · Editado: '+esc(c.fecha_edicion) : ''}
+        </div>
+      </div>
+      <div class="exp-card-right">
+        <button class="cxbtn" onclick="openSgForm(${c.id},true)">👁 Ver</button>
+        <button class="cxbtn save" onclick="openSgForm(${c.id},false)">✏️ Editar</button>
+      </div>
+    </div>`).join('');
+
+  $('cxBody').innerHTML = addBtn + `<div class="exp-section">
+    <div class="exp-title">📊 Fichas de seguimiento (${list.length})</div>
+    ${rows}
+  </div>`;
+}
+
+/* ── Abre el formulario de seguimiento (nuevo o editar) ── */
+async function openSgForm(consultaId, readOnly) {
+  sgConsultaId = consultaId;
+  sgReadOnly   = !!readOnly;
+
+  $('cxHdrSub').textContent = readOnly ? 'Modo lectura' : (consultaId ? 'Editando control' : 'Nuevo control');
+  $('cxSaveBtn').style.display = readOnly ? 'none' : 'inline-flex';
+
+  /* Clonar el template */
+  const tmpl = document.getElementById('sgFormTemplate');
+  const clone = tmpl.content.cloneNode(true);
+  $('cxBody').innerHTML = '';
+  $('cxBody').appendChild(clone);
+  $('cxBody').classList.toggle('cx-readonly', readOnly);
+
+  /* Inicializar fecha */
+  const fechaEl = document.getElementById('sgFecha');
+  if (fechaEl) fechaEl.value = todayISO();
+
+  /* Construir preguntas y R24 en blanco primero */
+  sgBuildPreguntas([]);
+  sgBuildR24([]);
+  sgSetupIMC();
+
+  /* Botón volver en header */
+  $('cxSaveBtn').onclick = saveSeguimiento;
+
+  /* Cargar datos si es edición */
+  if (consultaId) {
+    const r = await fetch(`/api/consultas/${consultaId}`).then(x => x.json()).catch(() => null);
+    if (r && r.success) {
+      sgFillForm(r.consulta.data || {}, r.consulta.titulo || '');
+    }
+  } else {
+    /* Nuevo: auto-numerar */
+    const r2 = await fetch(`/api/submissions/${sgSubmissionId}/consultas?tipo=seguimiento`)
+      .then(x => x.json()).catch(() => ({ consultas: [] }));
+    const n = (r2.consultas || []).length + 1;
+    const tituloEl = document.getElementById('sgTitulo');
+    if (tituloEl) tituloEl.value = `Control ${n}`;
+  }
+}
+
+/* ── Construir lista de preguntas ── */
+function sgBuildPreguntas(savedPreguntas) {
+  const container = document.getElementById('sgQuestionsList');
+  if (!container) return;
+  /* Si hay preguntas guardadas, usarlas; si no, usar defaults */
+  const lista = (savedPreguntas && savedPreguntas.length)
+    ? savedPreguntas
+    : SG_PREGUNTAS_DEFAULT.map(q => ({ label: q, respuesta: '' }));
+
+  container.innerHTML = '';
+  lista.forEach((p, i) => sgAddPreguntaItem(container, p.label, p.respuesta, i));
+}
+
+function sgAddPreguntaItem(container, label, respuesta, idx) {
+  const div = document.createElement('div');
+  div.className = 'sg-question-item';
+  div.dataset.idx = idx;
+  div.innerHTML = `
+    <div class="sg-question-label">
+      <span style="opacity:.5">${idx+1}.</span>
+      <input class="sg-question-edit-lbl" type="text"
+        value="${esc(label)}"
+        title="Puedes editar el texto de la pregunta"
+        placeholder="Pregunta personalizada…"/>
+    </div>
+    <textarea data-sg-resp="${idx}"
+      placeholder="Respuesta del paciente…">${esc(respuesta)}</textarea>
+    <button class="sg-del-pregunta cx-edit-only" title="Eliminar pregunta"
+      onclick="this.closest('.sg-question-item').remove()">✕</button>`;
+  container.appendChild(div);
+}
+
+function sgAddPregunta() {
+  const container = document.getElementById('sgQuestionsList');
+  if (!container) return;
+  const idx = container.querySelectorAll('.sg-question-item').length;
+  sgAddPreguntaItem(container, '', '', idx);
+  container.querySelector('.sg-question-item:last-child input')?.focus();
+}
+
+/* ── R24 para seguimiento ── */
+function _sgR24RowHTML(nombre, idx) {
+  const k = 'sgr24_' + idx;
+  return `<tr data-idx="${idx}">
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem;width:100%" data-key="${k}_nombre" type="text" value="${esc(nombre||'')}"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_hora" type="time"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_prep" type="text" placeholder="Alimentos y preparación…"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem" data-key="${k}_obs"  type="text" placeholder="Observaciones…"/></td>
+    <td><input class="cx-input" style="padding:4px 8px;font-size:.82rem;text-align:right" data-key="${k}_kcal" type="number" step="1" min="0" placeholder="0"/></td>
+    <td class="cx-edit-only" style="text-align:center">
+      <button class="cx-del-row" title="Eliminar fila" onclick="this.closest('tr').remove()">✕</button>
+    </td>
+  </tr>`;
+}
+
+function sgBuildR24(rows) {
+  const tbody = document.getElementById('sgR24Tbody');
+  if (!tbody) return;
+  const list = (rows && rows.length) ? rows : R24_DEFAULT;
+  tbody.innerHTML = list.map((item, i) => {
+    const nombre = typeof item === 'object' ? (item.nombre || '') : item;
+    return _sgR24RowHTML(nombre, i);
+  }).join('');
+}
+
+function addSgR24Fila() {
+  const tbody = document.getElementById('sgR24Tbody');
+  if (!tbody) return;
+  const idx = tbody.querySelectorAll('tr').length;
+  tbody.insertAdjacentHTML('beforeend', _sgR24RowHTML('', idx));
+  tbody.querySelector('tr:last-child input')?.focus();
+}
+
+/* ── IMC auto para seguimiento ── */
+function sgSetupIMC() {
+  const pesoEl    = document.querySelector('#cxBody [data-key="sgPeso"]');
+  const estatEl   = document.querySelector('#cxBody [data-key="sgEstatura"]');
+  const imcBadge  = document.getElementById('sgIMC');
+  if (!pesoEl || !estatEl || !imcBadge) return;
+  const calc = () => {
+    const p = parseFloat(pesoEl.value), e = parseFloat(estatEl.value);
+    if (!p || !e || e < 50) {
+      imcBadge.textContent = '— Ingresa peso y estatura';
+      imcBadge.style.background = '#EAF0FA'; imcBadge.style.color = '#1A4A8A';
+      return;
+    }
+    const h = e / 100, imc = (p / (h*h)).toFixed(1);
+    let cat = '', bg = '', col = '';
+    if (imc < 18.5)      { cat='Bajo peso';    bg='#EAF0FA'; col='#1A4A8A'; }
+    else if (imc < 25)   { cat='Normal';        bg='#EAF8EE'; col='#1A7A45'; }
+    else if (imc < 30)   { cat='Sobrepeso';     bg='#FFF8E8'; col='#8A5A00'; }
+    else                 { cat='Obesidad';       bg='#FEF0EE'; col='#C96848'; }
+    imcBadge.textContent = `IMC ${imc} — ${cat}`;
+    imcBadge.style.background = bg; imcBadge.style.color = col;
+  };
+  pesoEl.addEventListener('input', calc);
+  estatEl.addEventListener('input', calc);
+}
+
+/* ── Poblar el formulario con datos guardados ── */
+function sgFillForm(data, titulo) {
+  const tituloEl = document.getElementById('sgTitulo');
+  if (tituloEl) tituloEl.value = titulo || '';
+
+  /* Campos con data-key simples */
+  document.querySelectorAll('#cxBody [data-key]').forEach(el => {
+    const val = data[el.dataset.key];
+    if (val !== undefined && val !== null) el.value = val;
+  });
+
+  /* Preguntas */
+  if (data._sg_preguntas && data._sg_preguntas.length) {
+    sgBuildPreguntas(data._sg_preguntas);
+  } else {
+    sgBuildPreguntas([]);
+  }
+
+  /* R24 */
+  if (data._sg_r24_rows && data._sg_r24_rows.length) {
+    sgBuildR24(data._sg_r24_rows);
+  } else {
+    sgBuildR24([]);
+  }
+
+  /* Volver a calcular IMC */
+  sgSetupIMC();
+  /* Trigger cálculo inicial */
+  document.querySelector('#cxBody [data-key="sgPeso"]')?.dispatchEvent(new Event('input'));
+}
+
+/* ── Leer el formulario ── */
+function sgReadForm() {
+  const data = {};
+
+  /* Preguntas */
+  const preguntas = [];
+  document.querySelectorAll('#sgQuestionsList .sg-question-item').forEach(item => {
+    const lbl  = item.querySelector('.sg-question-edit-lbl')?.value || '';
+    const resp = item.querySelector('textarea')?.value || '';
+    preguntas.push({ label: lbl, respuesta: resp });
+  });
+  data._sg_preguntas = preguntas;
+
+  /* R24 filas */
+  const r24Rows = [];
+  document.querySelectorAll('#sgR24Tbody tr').forEach(tr => {
+    const nombreEl = tr.querySelector('[data-key$="_nombre"]');
+    r24Rows.push({ nombre: nombreEl ? nombreEl.value : '' });
+  });
+  data._sg_r24_rows = r24Rows;
+
+  /* Todos los data-key */
+  document.querySelectorAll('#cxBody [data-key]').forEach(el => {
+    const v = el.value.trim();
+    if (v) data[el.dataset.key] = v;
+  });
+
+  return data;
+}
+
+/* ── Guardar seguimiento (POST o PUT) ── */
+async function saveSeguimiento() {
+  const tituloEl = document.getElementById('sgTitulo');
+  const titulo = (tituloEl ? tituloEl.value : '').trim() || 'Control';
+  const data = sgReadForm();
+
+  const btn = $('cxSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  try {
+    let res;
+    if (sgConsultaId) {
+      res = await fetch(`/api/consultas/${sgConsultaId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo, data })
+      }).then(x => x.json());
+    } else {
+      res = await fetch(`/api/submissions/${sgSubmissionId}/consultas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo, tipo: 'seguimiento', data })
+      }).then(x => x.json());
+      if (res.success) sgConsultaId = res.id;
+    }
+
+    if (!res.success) throw new Error('Error al guardar');
+    btn.textContent = '✓ Guardado';
+    btn.style.background = '#2A9D5C';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = '💾 Guardar';
+      btn.style.background = '';
+      /* Volver al historial */
+      openSeguimiento();
+    }, 1200);
+  } catch (err) {
+    alert('❌ No se pudo guardar: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = '💾 Guardar';
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
