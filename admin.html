@@ -433,6 +433,10 @@
     border-color:rgba(0,130,120,.35);color:#006B63;background:transparent;
   }
   .mbtn.seguimiento:hover{background:#006B63;color:#fff;border-color:#006B63}
+  .mbtn.documentos{
+    border-color:rgba(180,100,0,.35);color:#915000;background:transparent;
+  }
+  .mbtn.documentos:hover{background:#915000;color:#fff;border-color:#915000}
 
   .mbtn.edit-ficha{
     border-color:rgba(45,155,90,.35);color:#1A7A45;background:transparent;
@@ -761,6 +765,7 @@
       <button class="mbtn expediente" onclick="openExpediente()">📋 R24/FR</button>
       <button class="mbtn seguimiento" onclick="openSeguimiento()">📊 Seguimiento</button>
       <button class="mbtn notas" onclick="openNotas()">📝 Notas</button>
+      <button class="mbtn documentos" onclick="openDocumentos()">📁 Documentos</button>
       <button class="mbtn edit-ficha" id="btnEditFicha" onclick="toggleEditFicha()">✏️ Editar ficha</button>
       <button class="mbtn review" id="btnRev" onclick="toggleReview()">✓ Marcar revisada</button>
     </div>
@@ -1158,6 +1163,77 @@
     to{opacity:1;transform:translateY(0)}
   }
 </style>
+
+<!-- ════════════════ MODAL DOCUMENTOS ════════════════ -->
+<style>
+  .dc-bg{
+    display:none;position:fixed;inset:0;z-index:2200;
+    background:rgba(10,4,20,.6);backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;padding:16px;
+  }
+  .dc-bg.open{display:flex;animation:fade-bg .2s ease}
+  .dc-modal{
+    background:#fff;border-radius:24px;width:100%;max-width:760px;
+    max-height:92vh;display:flex;flex-direction:column;
+    box-shadow:0 32px 100px rgba(10,4,20,.3);
+    animation:modal-up .3s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .dc-hdr{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 28px 16px;border-bottom:1.5px solid #F0EEE8;
+    flex-shrink:0;
+  }
+  .dc-hdr-title{font-size:1.05rem;font-weight:800;color:#1C2C1E;letter-spacing:-.01em}
+  .dc-hdr-sub{font-size:.78rem;color:#6A7A6E;margin-top:2px}
+  .dc-body{flex:1;overflow-y:auto;padding:22px 28px}
+  .dc-upload-box{
+    background:#FFF8EE;border:2px dashed rgba(180,100,0,.35);
+    border-radius:14px;padding:18px 20px;margin-bottom:18px;
+  }
+  .dc-upload-title{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#915000;margin-bottom:10px}
+  .dc-upload-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .dc-file-input{flex:1;min-width:180px}
+  .dc-desc-input{flex:2;min-width:200px}
+  .dc-upload-btn{
+    background:#915000;color:#fff;border:none;border-radius:10px;
+    padding:8px 18px;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;
+    white-space:nowrap;
+  }
+  .dc-upload-btn:hover{background:#6B3800}
+  .dc-upload-btn:disabled{opacity:.6;cursor:not-allowed}
+  .dc-doc-list{display:flex;flex-direction:column;gap:10px}
+  .dc-doc-item{
+    background:#FAFAF8;border:1.5px solid #EEE;border-radius:12px;
+    padding:12px 16px;display:flex;align-items:center;gap:12px;
+  }
+  .dc-doc-icon{font-size:1.6rem;flex-shrink:0}
+  .dc-doc-info{flex:1;min-width:0}
+  .dc-doc-name{font-weight:700;font-size:.88rem;color:#1C2C1E;word-break:break-all}
+  .dc-doc-meta{font-size:.75rem;color:#8A9A8E;margin-top:2px}
+  .dc-doc-actions{display:flex;gap:6px;flex-shrink:0}
+  .dc-doc-btn{
+    border:1.5px solid #DDD;background:#fff;border-radius:8px;
+    padding:5px 12px;font-size:.78rem;font-weight:600;cursor:pointer;transition:.2s;color:#3A4A3E;
+  }
+  .dc-doc-btn:hover{background:#F0F0F0}
+  .dc-doc-btn.del{color:#C96848;border-color:rgba(200,80,40,.3)}
+  .dc-doc-btn.del:hover{background:#FDF5F0}
+  .dc-empty{text-align:center;padding:30px;color:#8A9A8E;font-size:.88rem}
+</style>
+<div class="dc-bg" id="dcBg" onclick="closeDC()">
+  <div class="dc-modal" onclick="event.stopPropagation()">
+    <div class="dc-hdr">
+      <div>
+        <div class="dc-hdr-title" id="dcTitle">📁 Documentos del paciente</div>
+        <div class="dc-hdr-sub" id="dcSub"></div>
+      </div>
+      <button class="cxbtn cancel" onclick="closeDC()">✕ Cerrar</button>
+    </div>
+    <div class="dc-body" id="dcBody">
+      <div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════ MODAL NOTAS DE SEGUIMIENTO ════════════════ -->
 <div class="nt-bg" id="ntBg" onclick="closeNT()">
@@ -2493,10 +2569,10 @@ async function openExpediente() {
   await loadHistory();
 }
 
-/* ── Cargar y mostrar el historial ── */
+/* ── Cargar y mostrar el historial de R24/FR (solo tipo=inicial) ── */
 async function loadHistory() {
   $('cxBody').innerHTML = '<div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>';
-  const r = await fetch(`/api/submissions/${cxSubmissionId}/consultas`).then(x => x.json()).catch(() => ({ consultas: [] }));
+  const r = await fetch(`/api/submissions/${cxSubmissionId}/consultas?tipo=inicial`).then(x => x.json()).catch(() => ({ consultas: [] }));
   renderHistory(r.consultas || []);
 }
 
@@ -2507,7 +2583,10 @@ function renderHistory(list) {
   let html = `
     <div class="exp-header">
       <div class="exp-title">📋 Registros R24/FR Consumo</div>
-      <button class="btn-new-consulta" onclick="openConsultaForm(null,false)">➕ Nuevo registro</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-new-consulta" onclick="openConsultaForm(null,false)">➕ Nuevo registro</button>
+        <button class="cxbtn" style="display:inline-flex;border-color:rgba(26,74,138,.4);color:#1A4A8A" onclick="cxEditTemplate()">⚙️ Editar plantilla</button>
+      </div>
     </div>`;
 
   if (!list.length) {
@@ -2566,6 +2645,84 @@ async function openConsultaForm(consultaId, readOnly) {
     $('cxHdrSub').textContent = 'Nuevo registro';
     $('cxBody').classList.remove('cx-readonly');
     $('cfTitulo').value = '';
+    /* Cargar plantillas globales para nuevas fichas */
+    const [tmplR24, tmplCons] = await Promise.all([
+      fetch('/api/templates/r24').then(x => x.json()).catch(() => null),
+      fetch('/api/templates/consumo').then(x => x.json()).catch(() => null)
+    ]);
+    buildR24Table((tmplR24 && tmplR24.success && tmplR24.template.r24_rows) || null);
+    buildConsumoTable((tmplCons && tmplCons.success && tmplCons.template.consumo_rows) || null);
+  }
+}
+
+/* ══ EDITOR DE PLANTILLA GLOBAL PARA R24/FR ══ */
+async function cxEditTemplate() {
+  $('cxHdrSub').textContent = 'Editando plantilla R24/FR';
+  $('cxSaveBtn').style.display = 'none';
+  $('cxBody').innerHTML = '<div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>';
+
+  const [r24Res, consRes] = await Promise.all([
+    fetch('/api/templates/r24').then(x => x.json()).catch(() => null),
+    fetch('/api/templates/consumo').then(x => x.json()).catch(() => null)
+  ]);
+  const r24tmpl  = (r24Res  && r24Res.success)  ? r24Res.template  : { r24_rows: [] };
+  const constmpl = (consRes && consRes.success) ? consRes.template : { consumo_rows: [] };
+
+  $('cxBody').innerHTML = `
+    <div style="background:#EAF0FA;border:1.5px solid rgba(26,74,138,.25);border-radius:12px;padding:14px 16px;margin-bottom:18px;font-size:.82rem;color:#1A3A6A">
+      <strong>¿Cómo funciona la plantilla?</strong><br>
+      Los cambios se aplican a los <u>próximos registros nuevos</u> de todos los pacientes.
+      Los registros ya guardados <strong>no se modifican</strong> nunca.
+    </div>
+    <div style="background:#F4F8FF;border:1.5px solid rgba(26,74,138,.18);border-radius:14px;padding:18px 20px;margin-bottom:14px">
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1A4A8A;margin-bottom:10px">⏱️ Tiempos del R24 (Recordatorio 24 hrs)</div>
+      <div id="cxTplR24List"></div>
+      <button class="cx-add-row-btn" style="margin-top:6px" onclick="cxTplAddR24()">+ Agregar tiempo</button>
+    </div>
+    <div style="background:#F4F8FF;border:1.5px solid rgba(26,74,138,.18);border-radius:14px;padding:18px 20px;margin-bottom:18px">
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1A4A8A;margin-bottom:10px">🍽️ Ítems de Frecuencia de Consumo</div>
+      <div id="cxTplConsList"></div>
+      <button class="cx-add-row-btn" style="margin-top:6px" onclick="cxTplAddCons()">+ Agregar ítem</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="cxbtn save" id="cxTplSaveBtn" style="display:inline-flex" onclick="cxTplSave()">💾 Guardar plantilla</button>
+      <button class="cxbtn" onclick="loadHistory()">↩ Volver al historial</button>
+    </div>`;
+
+  (r24tmpl.r24_rows || []).forEach(row => _cxTplAddItem('cxTplR24List', row.nombre, 'cx-tpl-r24-input'));
+  (constmpl.consumo_rows || []).forEach(row => _cxTplAddItem('cxTplConsList', row.nombre, 'cx-tpl-cons-input'));
+}
+
+function _cxTplAddItem(listId, nombre, cls) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const div = document.createElement('div');
+  div.className = 'sg-question-item';
+  div.style.cssText = 'flex-direction:row;align-items:center;gap:8px';
+  div.innerHTML = `
+    <input type="text" class="cx-input ${cls}" value="${esc(nombre||'')}"
+      placeholder="Nombre del ítem…" style="flex:1;padding:6px 10px;font-size:.85rem"/>
+    <button class="cx-del-row" title="Eliminar" onclick="this.closest('.sg-question-item').remove()">✕</button>`;
+  list.appendChild(div);
+}
+function cxTplAddR24()  { _cxTplAddItem('cxTplR24List',  '', 'cx-tpl-r24-input');  document.querySelector('#cxTplR24List  .sg-question-item:last-child input')?.focus(); }
+function cxTplAddCons() { _cxTplAddItem('cxTplConsList', '', 'cx-tpl-cons-input'); document.querySelector('#cxTplConsList .sg-question-item:last-child input')?.focus(); }
+
+async function cxTplSave() {
+  const r24_rows    = [...document.querySelectorAll('.cx-tpl-r24-input')].map(el => ({ nombre: el.value.trim() })).filter(r => r.nombre);
+  const consumo_rows = [...document.querySelectorAll('.cx-tpl-cons-input')].map(el => ({ nombre: el.value.trim() })).filter(r => r.nombre);
+  const btn = document.getElementById('cxTplSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+  const [r1, r2] = await Promise.all([
+    fetch('/api/templates/r24',     { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ r24_rows }) }).then(x => x.json()).catch(() => ({ success: false })),
+    fetch('/api/templates/consumo', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ consumo_rows }) }).then(x => x.json()).catch(() => ({ success: false }))
+  ]);
+  if (r1.success && r2.success) {
+    if (btn) { btn.textContent = '✓ Guardada'; btn.style.background = '#2A9D5C'; }
+    setTimeout(() => loadHistory(), 1000);
+  } else {
+    alert('❌ No se pudo guardar la plantilla');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar plantilla'; btn.style.background = ''; }
   }
 }
 
@@ -2802,6 +2959,121 @@ function closeCX() {
   document.body.style.overflow = '';
   cxConsultaId = null;
   cxReadOnly   = false;
+}
+
+/* ════════════════════════════════════════════════════════════
+   DOCUMENTOS DEL PACIENTE
+   ════════════════════════════════════════════════════════════ */
+
+let dcSubmissionId = null;
+
+function dcMimeIcon(mime) {
+  if (!mime) return '📄';
+  if (mime === 'application/pdf') return '📕';
+  if (mime.startsWith('image/')) return '🖼️';
+  if (mime.includes('word') || mime.includes('document')) return '📝';
+  return '📄';
+}
+function dcFormatSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+async function openDocumentos() {
+  if (!curId) return;
+  dcSubmissionId = curId;
+  $('dcTitle').textContent = '📁 ' + ($('mName').textContent || 'Paciente');
+  $('dcSub').textContent   = 'Documentos del paciente';
+  $('dcBg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  $('dcBody').innerHTML = '<div style="text-align:center;padding:40px"><span class="spin" style="font-size:2rem">⏳</span></div>';
+  const r = await fetch(`/api/submissions/${dcSubmissionId}/docs`).then(x => x.json()).catch(() => ({ docs: [] }));
+  docsRender(r.docs || []);
+}
+
+function closeDC() {
+  $('dcBg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function docsRender(docs) {
+  const uploadBox = `
+    <div class="dc-upload-box">
+      <div class="dc-upload-title">📤 Subir documento</div>
+      <div class="dc-upload-row">
+        <div class="dc-file-input">
+          <label style="font-size:.78rem;font-weight:600;color:#5A4A3A;display:block;margin-bottom:4px">Archivo (PDF, imagen, Word — máx. 20 MB)</label>
+          <input type="file" id="dcFileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            style="font-size:.82rem;width:100%" />
+        </div>
+        <div class="dc-desc-input">
+          <label style="font-size:.78rem;font-weight:600;color:#5A4A3A;display:block;margin-bottom:4px">Descripción (opcional)</label>
+          <input type="text" id="dcDescInput" class="cx-input" placeholder="Ej: Pauta alimentaria julio 2025…"
+            style="padding:7px 10px;font-size:.85rem;width:100%;box-sizing:border-box"/>
+        </div>
+        <button class="dc-upload-btn" id="dcUploadBtn" onclick="docsUpload()">⬆ Subir</button>
+      </div>
+      <div id="dcUploadMsg" style="font-size:.78rem;margin-top:8px;color:#915000"></div>
+    </div>`;
+
+  let list = '';
+  if (!docs.length) {
+    list = '<div class="dc-empty">Aún no hay documentos subidos para este paciente.</div>';
+  } else {
+    list = '<div class="dc-doc-list">' + docs.map(d => `
+      <div class="dc-doc-item" id="dci-${d.id}">
+        <div class="dc-doc-icon">${dcMimeIcon(d.mime)}</div>
+        <div class="dc-doc-info">
+          <div class="dc-doc-name">${esc(d.nombre)}</div>
+          <div class="dc-doc-meta">${esc(d.fecha)} · ${dcFormatSize(d.size)}${d.descripcion ? ' · ' + esc(d.descripcion) : ''}</div>
+        </div>
+        <div class="dc-doc-actions">
+          <button class="dc-doc-btn" onclick="window.open('/api/docs/${d.id}/download','_blank')">⬇ Descargar</button>
+          <button class="dc-doc-btn del" onclick="docsDelete(${d.id})">🗑 Eliminar</button>
+        </div>
+      </div>`).join('') + '</div>';
+  }
+  $('dcBody').innerHTML = uploadBox + list;
+}
+
+async function docsUpload() {
+  const fileInput = document.getElementById('dcFileInput');
+  const descInput = document.getElementById('dcDescInput');
+  const msgEl     = document.getElementById('dcUploadMsg');
+  const btn       = document.getElementById('dcUploadBtn');
+  if (!fileInput.files.length) { msgEl.textContent = '⚠️ Selecciona un archivo primero'; return; }
+  const fd = new FormData();
+  fd.append('archivo', fileInput.files[0]);
+  fd.append('descripcion', descInput.value.trim());
+  btn.disabled = true; btn.textContent = 'Subiendo…';
+  msgEl.textContent = '';
+  const r = await fetch(`/api/submissions/${dcSubmissionId}/docs`, { method: 'POST', body: fd })
+    .then(x => x.json()).catch(() => ({ success: false }));
+  if (r.success) {
+    msgEl.style.color = '#2A7A45';
+    msgEl.textContent = '✓ Documento subido correctamente';
+    fileInput.value = ''; descInput.value = '';
+    setTimeout(async () => {
+      const r2 = await fetch(`/api/submissions/${dcSubmissionId}/docs`).then(x => x.json()).catch(() => ({ docs: [] }));
+      docsRender(r2.docs || []);
+    }, 800);
+  } else {
+    msgEl.style.color = '#C96848';
+    msgEl.textContent = '❌ ' + (r.message || 'No se pudo subir el archivo');
+    btn.disabled = false; btn.textContent = '⬆ Subir';
+  }
+}
+
+async function docsDelete(id) {
+  if (!confirm('¿Eliminar este documento? Esta acción no se puede deshacer.')) return;
+  const r = await fetch(`/api/docs/${id}`, { method: 'DELETE' }).then(x => x.json()).catch(() => ({ success: false }));
+  if (r.success) {
+    document.getElementById('dci-' + id)?.remove();
+  } else {
+    alert('❌ No se pudo eliminar el documento');
+  }
 }
 
 /* ════════════════════════════════════════════════════════════

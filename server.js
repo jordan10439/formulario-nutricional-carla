@@ -163,6 +163,51 @@ async function initDB() {
       ]
     }'::jsonb)
     ON CONFLICT (tipo) DO NOTHING;
+    /* Seed template r24 (Recordatorio 24 horas) */
+    INSERT INTO form_templates (tipo, data)
+    VALUES ('r24', '{
+      "r24_rows": [
+        {"nombre": "Desayuno"},
+        {"nombre": "Media ma\u00f1ana"},
+        {"nombre": "Almuerzo"},
+        {"nombre": "Once / Merienda"},
+        {"nombre": "Cena"},
+        {"nombre": "Post-cena"},
+        {"nombre": "Otro"}
+      ]
+    }'::jsonb)
+    ON CONFLICT (tipo) DO NOTHING;
+    /* Seed template consumo (Frecuencia de Consumo) */
+    INSERT INTO form_templates (tipo, data)
+    VALUES ('consumo', '{
+      "consumo_rows": [
+        {"nombre": "Pan"},{"nombre": "Frutas"},{"nombre": "Verduras"},
+        {"nombre": "L\u00e1cteos (\u00bfcu\u00e1les?)"},{"nombre": "Avena"},{"nombre": "Legumbres"},
+        {"nombre": "Carnes rojas"},{"nombre": "Carnes blancas"},{"nombre": "Pescado"},
+        {"nombre": "Huevo"},{"nombre": "Embutidos"},{"nombre": "Frituras"},
+        {"nombre": "Comida chatarra"},{"nombre": "Az\u00facar"},{"nombre": "Milo o chocolates"},
+        {"nombre": "Dulces o golosinas"},{"nombre": "Bebidas"},{"nombre": "Jugos n\u00e9ctar"},
+        {"nombre": "Mantequilla"},{"nombre": "Mermelada"},{"nombre": "Frutos secos"},
+        {"nombre": "Agua"},{"nombre": "Repostería"},{"nombre": "Queso"},
+        {"nombre": "Quesillo"},{"nombre": "Caf\u00e9 / T\u00e9"},{"nombre": "Miel"},
+        {"nombre": "Alcohol"},{"nombre": "Otro"}
+      ]
+    }'::jsonb)
+    ON CONFLICT (tipo) DO NOTHING;
+  `);
+  /* Documentos del paciente */
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS patient_documents (
+      id            SERIAL PRIMARY KEY,
+      submission_id INTEGER REFERENCES submissions(id) ON DELETE CASCADE,
+      nombre        VARCHAR(500) NOT NULL,
+      mime          VARCHAR(150) NOT NULL DEFAULT 'application/octet-stream',
+      size          INTEGER NOT NULL DEFAULT 0,
+      data          BYTEA NOT NULL,
+      descripcion   TEXT NOT NULL DEFAULT '',
+      created_at    TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_pdocs_submission ON patient_documents(submission_id);
   `);
 }
 
@@ -241,8 +286,82 @@ app.put('/api/templates/:tipo', requireAdmin, async (req, res) => {
 });
 
 /* ================================================================
-   PUBLIC API
+   DOCUMENTOS DEL PACIENTE
    ================================================================ */
+
+const uploadDoc = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'image/jpeg','image/jpg','image/png',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    cb(new Error('Formato no permitido'));
+  }
+});
+
+/* GET /api/submissions/:id/docs */
+app.get('/api/submissions/:id/docs', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const r = await getPool().query(
+      `SELECT id, nombre, mime, size, descripcion,
+              TO_CHAR(created_at AT TIME ZONE 'America/Santiago', 'DD/MM/YYYY HH24:MI') AS fecha
+       FROM patient_documents WHERE submission_id=$1 ORDER BY created_at DESC`,
+      [req.params.id]);
+    res.json({ success: true, docs: r.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* POST /api/submissions/:id/docs */
+app.post('/api/submissions/:id/docs', requireAdmin, uploadDoc.single('archivo'), async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  if (!req.file) return res.status(400).json({ success: false, message: 'No se recibió archivo' });
+  try {
+    const descripcion = (req.body.descripcion || '').trim().slice(0, 500);
+    const r = await getPool().query(
+      `INSERT INTO patient_documents (submission_id,nombre,mime,size,data,descripcion)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+      [req.params.id, req.file.originalname, req.file.mimetype,
+       req.file.size, req.file.buffer, descripcion]);
+    res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* GET /api/docs/:id/download */
+app.get('/api/docs/:id/download', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    const r = await getPool().query(
+      'SELECT nombre, mime, data FROM patient_documents WHERE id=$1', [req.params.id]);
+    if (!r.rows.length) return res.status(404).end();
+    const doc = r.rows[0];
+    res.setHeader('Content-Type', doc.mime);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.nombre)}"`);
+    res.send(doc.data);
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
+/* DELETE /api/docs/:id */
+app.delete('/api/docs/:id', requireAdmin, async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false });
+  try {
+    await getPool().query('DELETE FROM patient_documents WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 /* POST /api/submissions — save form + optional file attachments */
 app.post('/api/submissions', upload.array('adjuntos', 5), async (req, res) => {
