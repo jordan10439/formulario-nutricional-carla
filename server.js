@@ -7,6 +7,9 @@ const express = require('express');
 const session = require('express-session');
 const multer  = require('multer');
 const path    = require('path');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -396,6 +399,52 @@ app.post('/api/submissions', upload.array('adjuntos', 5), async (req, res) => {
     }
 
     res.json({ success: true, message: 'Ficha guardada correctamente' });
+
+    // Notificar al admin (no bloqueamos la respuesta al paciente)
+    if (process.env.RESEND_API_KEY && process.env.ADMIN_EMAIL) {
+      const nombreCompleto = [nombre, apellido].filter(Boolean).join(' ') || 'Paciente sin nombre';
+      const fechaHora = new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' });
+      const html = `
+        <div style="font-family:Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #EADCC6;">
+          <div style="background:#A8B49A;padding:24px;text-align:center;">
+            <h1 style="font-family:Georgia,serif;color:#fff;margin:0;font-size:20px;">📋 Nuevo formulario completado</h1>
+          </div>
+          <div style="padding:28px 24px;background:#FAF7F2;">
+            <p style="font-size:15px;color:#3D4A3A;margin:0 0 20px;">Un paciente acaba de completar su ficha nutricional:</p>
+            <div style="background:#EADCC6;border-left:4px solid #A8B49A;border-radius:8px;padding:20px 22px;margin-bottom:16px;">
+              <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:8px 0;color:#6B7A66;width:120px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Nombre</td>
+                  <td style="padding:8px 0;font-weight:600;color:#3D4A3A;font-size:14px;">${nombreCompleto}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#6B7A66;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Email</td>
+                  <td style="padding:8px 0;font-weight:600;color:#3D4A3A;font-size:14px;">${email || '—'}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#6B7A66;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Teléfono</td>
+                  <td style="padding:8px 0;font-weight:600;color:#3D4A3A;font-size:14px;">${tel || '—'}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#6B7A66;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Enviado</td>
+                  <td style="padding:8px 0;font-weight:600;color:#3D4A3A;font-size:14px;">${fechaHora}</td>
+                </tr>
+              </table>
+            </div>
+            <p style="color:#8A9A80;font-size:13px;margin:0;">Podés ver la ficha completa en el panel de administración del formulario.</p>
+          </div>
+          <div style="background:#EADCC6;padding:16px 24px;text-align:center;border-top:1px solid #d4c5ae;">
+            <p style="margin:0;font-size:12px;color:#6B7A66;">Este correo fue enviado automáticamente.</p>
+          </div>
+        </div>
+      `;
+      resend.emails.send({
+        from: 'Agenda Nutri <agenda@nutricioncarlaguerrero.com>',
+        to: process.env.ADMIN_EMAIL,
+        subject: `📋 Nueva ficha: ${nombreCompleto}`,
+        html,
+      }).catch(err => console.error('[formulario] Error enviando aviso admin:', err.message));
+    }
   } catch (err) {
     console.error('Error guardando submission:', err.message);
     /* Multer validation errors */
